@@ -2,9 +2,7 @@ use crate::schema::{recipe, recipe_step, recipe_users};
 
 use diesel::prelude::*;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-use super::{DbConnection, OkPool};
+use serde::Deserialize;
 
 #[derive(
     Deserialize, Queryable, Selectable, Identifiable, Associations, Debug, PartialEq, Insertable,
@@ -38,11 +36,4 @@ pub struct User {
     pub id: Option<i32>,
     pub user_name: String,
     pub user_pwd: String,
-}
-
-impl User {
-    /// will use JWT to get user id
-    pub fn get_id(&self, conn: OkPool) -> i32 {
-        todo!("implement jwt handling")
-    }
 }
