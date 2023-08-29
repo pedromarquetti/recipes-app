@@ -1,12 +1,10 @@
 use db::{connect_to_db, Pool};
 use dotenvy::dotenv;
-use error::{convert_to_rejection, handle_rejection};
-use log::{debug, error, info};
+use error::handle_rejection;
+use log::info;
 use routes::routing_table;
-use serde::{Deserialize, Deserializer};
-use serde_json::json;
+
 use std::{
-    collections::HashMap,
     env,
     net::{IpAddr, SocketAddr},
     str::FromStr,
@@ -22,11 +20,6 @@ const DEFAULT_DATABASE_URL: &'static str = "postgresql://postgres@localhost:5432
 
 fn get_db_url() -> String {
     env::var("DATABASE_URL").unwrap_or(String::from(DEFAULT_DATABASE_URL))
-}
-
-#[derive(Deserialize, Debug)]
-struct Test {
-    a: String,
 }
 
 #[tokio::main]
