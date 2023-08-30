@@ -4,11 +4,11 @@ use warp::{reject::Rejection, reply::Reply};
 
 use crate::{
     db::{recipe::User, DbConnection, OkPool},
-    error::{convert_to_rejection, handle_rejection},
+    error::convert_to_rejection,
 };
 
 pub async fn create_user(db_conn: DbConnection, usr: User) -> Result<impl Reply, Rejection> {
-    let mut conn = db_conn.map_err(convert_to_rejection)?;
+    let mut conn: OkPool = db_conn.map_err(convert_to_rejection)?;
     use crate::schema::recipe_users;
 
     diesel::insert_into(recipe_users::table)

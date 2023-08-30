@@ -1,12 +1,10 @@
 use diesel::{ExpressionMethods, RunQueryDsl};
-use log::{debug, info};
 use serde_json::json;
-use warp::{reply::Response, Rejection, Reply};
+use warp::{Rejection, Reply};
 
 use crate::{
-    db::{recipe::Recipe, DbConnection},
+    db::{recipe::Recipe, DbConnection, OkPool},
     error::{convert_to_rejection, Error},
-    schema::recipe_step::recipe_id,
 };
 
 pub async fn create_recipe(
@@ -14,9 +12,8 @@ pub async fn create_recipe(
     recipe: Recipe,
 ) -> Result<impl Reply, Rejection> {
     use crate::schema::recipe;
-    debug!("{:?}", recipe);
 
-    let mut conn = db_connection.map_err(convert_to_rejection)?;
+    let mut conn: OkPool = db_connection.map_err(convert_to_rejection)?;
 
     let id = diesel::insert_into(recipe::table)
         .values::<Recipe>(recipe)
@@ -31,7 +28,7 @@ pub async fn delete_recipe(
     db_connection: DbConnection,
     incoming_recipe: Recipe,
 ) -> Result<impl Reply, Rejection> {
-    let mut conn = db_connection.map_err(convert_to_rejection)?;
+    let mut conn: OkPool = db_connection.map_err(convert_to_rejection)?;
     use crate::schema::recipe;
     match incoming_recipe.id {
         Some(incoming_id) => {
