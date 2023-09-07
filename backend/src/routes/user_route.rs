@@ -1,35 +1,30 @@
-use diesel::{ExpressionMethods, RunQueryDsl};
 use serde_json::json;
 use warp::{reject::Rejection, reply::Reply};
 
-use crate::{
-    db::{recipe::User, DbConnection, OkPool},
-    error::convert_to_rejection,
+use crate::error::convert_to_rejection;
+use db::{
+    db_pool::{DbConnection, PooledPgConnection},
+    functions::user::{create_user_record, delete_user_record},
+    structs::User,
 };
 
-pub async fn create_user(db_conn: DbConnection, usr: User) -> Result<impl Reply, Rejection> {
-    let mut conn: OkPool = db_conn.map_err(convert_to_rejection)?;
-    use crate::schema::recipe_users;
+pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
+    let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
-    diesel::insert_into(recipe_users::table)
-        .values::<&User>(&usr)
-        .execute(&mut conn)
-        .map_err(convert_to_rejection)?;
+    // running query
+    create_user_record(conn, &user).map_err(convert_to_rejection)?;
 
     Ok(warp::reply::json(&json!({
-        "msg": format!("user {} created", usr.user_name)
+        "msg": format!("user {} created", user.user_name)
     })))
 }
-pub async fn delete_user(db_conn: DbConnection, usr: User) -> Result<impl Reply, Rejection> {
-    let mut conn = db_conn.map_err(convert_to_rejection)?;
-    use crate::schema::recipe_users;
+pub async fn delete_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
+    let conn = db_conn.map_err(convert_to_rejection)?;
 
-    diesel::delete(recipe_users::table)
-        .filter(recipe_users::user_name.eq(&usr.user_name))
-        .execute(&mut conn)
-        .map_err(convert_to_rejection)?;
+    // running query
+    delete_user_record(conn, &user).map_err(convert_to_rejection)?;
 
     Ok(warp::reply::json(&json!({
-        "msg": format!("user {} created", usr.user_name)
+        "msg": format!("user {} deleted", user.user_name)
     })))
 }

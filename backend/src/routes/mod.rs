@@ -1,17 +1,13 @@
-use serde_json::Value;
-use warp::{path, Filter, Rejection, Reply};
-
 mod recipe_route;
 mod step_route;
 mod user_route;
 
-use crate::{
-    db::Pool,
-    routes::{recipe_route::create_recipe, step_route::create_step},
-};
+use crate::routes::{recipe_route::create_recipe, step_route::create_step};
+use db::db_pool::Pool;
+use warp::{path, Filter, Rejection, Reply};
 
 use self::{
-    recipe_route::delete_recipe,
+    recipe_route::{delete_recipe, view_recipe},
     step_route::delete_step,
     user_route::{create_user, delete_user},
 };
@@ -34,6 +30,12 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(delete_recipe);
+    let view_recipe = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "view" / "recipe"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(view_recipe);
 
     // recipe step endpoints
     let create_recipe_step = warp::post()
@@ -69,4 +71,5 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .or(delete_recipe_step)
         .or(create_user)
         .or(delete_user)
+        .or(view_recipe)
 }

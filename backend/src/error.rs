@@ -12,7 +12,7 @@ use warp::{
     Rejection, Reply,
 };
 
-use crate::db::{DieselError, R2D2Err};
+use db::db_pool::{DieselError, R2D2Err};
 
 /// convert any errors to my custom Error
 pub fn convert_to_rejection<E>(error: E) -> Rejection

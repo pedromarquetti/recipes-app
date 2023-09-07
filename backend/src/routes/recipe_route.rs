@@ -1,45 +1,52 @@
-use diesel::{ExpressionMethods, RunQueryDsl};
 use serde_json::json;
 use warp::{Rejection, Reply};
 
-use crate::{
-    db::{recipe::Recipe, DbConnection, OkPool},
-    error::{convert_to_rejection, Error},
+use crate::error::{convert_to_rejection, Error};
+use db::{
+    db_pool::{DbConnection, PooledPgConnection},
+    functions::recipe::{create_recipe_query, delete_recipe_query, query_recipe},
+    structs::{FullRecipe, Recipe},
 };
 
 pub async fn create_recipe(
     db_connection: DbConnection,
     recipe: Recipe,
 ) -> Result<impl Reply, Rejection> {
-    use crate::schema::recipe;
+    let conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
-    let mut conn: OkPool = db_connection.map_err(convert_to_rejection)?;
+    let id = create_recipe_query(conn, &recipe).map_err(convert_to_rejection)?;
 
-    let id = diesel::insert_into(recipe::table)
-        .values::<Recipe>(recipe)
-        .returning(recipe::id)
-        .execute(&mut conn)
-        .map_err(convert_to_rejection)?;
-
-    Ok(warp::reply::json(&json!({ "msg": format!("{:?}", id) })))
+    Ok(warp::reply::json(&json!({
+        "msg": format!("created recipe {}, with id {}", recipe.recipe_name, id)
+    })))
 }
 
 pub async fn delete_recipe(
     db_connection: DbConnection,
     incoming_recipe: Recipe,
 ) -> Result<impl Reply, Rejection> {
-    let mut conn: OkPool = db_connection.map_err(convert_to_rejection)?;
-    use crate::schema::recipe;
+    let conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
+
     match incoming_recipe.id {
-        Some(incoming_id) => {
-            diesel::delete(recipe::table)
-                .filter(recipe::id.eq(incoming_id))
-                .execute(&mut conn)
-                .map_err(convert_to_rejection)?;
+        Some(_) => {
+            delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
             Ok(warp::reply::json(&json!({
                 "msg": format!("recipe {} deleted", incoming_recipe.recipe_name)
             })))
         }
         None => return Err(Error::payload_error("must specify recipe id to delete").into()),
+    }
+}
+pub async fn view_recipe(
+    db_connection: DbConnection,
+    incoming_recipe: Recipe,
+) -> Result<impl Reply, Rejection> {
+    if let Some(_) = incoming_recipe.id {
+        let conn = db_connection.map_err(convert_to_rejection)?;
+        let recipe = query_recipe(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+
+        Ok(warp::reply::json::<FullRecipe>(&recipe))
+    } else {
+        Err(Error::payload_error("Recipe id not specified!").into())
     }
 }

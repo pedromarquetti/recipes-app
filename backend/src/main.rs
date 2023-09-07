@@ -1,9 +1,8 @@
-use db::{connect_to_db, Pool};
+use db::db_pool::{connect_to_db, Pool, R2D2Err};
 use dotenvy::dotenv;
 use error::handle_rejection;
 use log::info;
 use routes::routing_table;
-
 use std::{
     env,
     net::{IpAddr, SocketAddr},
@@ -11,10 +10,10 @@ use std::{
 };
 use warp::{Filter, Rejection};
 
-mod db;
+use crate::error::convert_to_rejection;
+
 mod error;
 mod routes;
-mod schema;
 
 const DEFAULT_DATABASE_URL: &'static str = "postgresql://postgres@localhost:5432";
 
@@ -29,7 +28,7 @@ async fn main() -> Result<(), Rejection> {
     }
     env_logger::init();
     dotenv().ok();
-    let db_pool: Pool = connect_to_db(get_db_url())?;
+    let db_pool: Pool = connect_to_db(get_db_url()).map_err(convert_to_rejection)?;
 
     let routes = routing_table(db_pool)
         .recover(handle_rejection)
