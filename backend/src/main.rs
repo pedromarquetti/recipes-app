@@ -1,4 +1,4 @@
-use db::db_pool::{connect_to_db, Pool, R2D2Err};
+use db::db_pool::{connect_to_db, Pool};
 use dotenvy::dotenv;
 use error::handle_rejection;
 use log::info;
