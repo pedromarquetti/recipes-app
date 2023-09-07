@@ -1,3 +1,5 @@
+use std::io::Error;
+
 use crate::schema::{recipe, recipe_step, recipe_users};
 
 use diesel::prelude::*;
@@ -71,4 +73,9 @@ pub struct User {
     pub id: Option<i32>,
     pub user_name: String,
     pub user_pwd: String,
+}
+impl User {
+    pub fn validate(&self, pwd: &str) -> Result<String, Error> {
+        return Ok(pwd.into());
+    }
 }
