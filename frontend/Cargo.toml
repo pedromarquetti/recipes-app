@@ -8,7 +8,11 @@ edition = "2021"
 [dependencies]
 yew = { version = "0.20.0", features = ["csr"] }
 yew-router = "0.17.0"
+gloo-net = {version = "0.2",features = ["http","json"]}
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wasm-logger = "0.2.0"
+log = "0.4"
 # fix for "wasm*-unknown-unknown targets are not supported by default"
 getrandom = { version = "0.2", features = ["js"] }
-serde = { version = "1.0.183" ,features = ["derive"]}
-serde_json = "1.0.105"
+db = { version = "0.1.0",path = "../db"}
