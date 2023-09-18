@@ -37,6 +37,7 @@ pub struct Step {
     Insertable,
     Identifiable,
     PartialEq,
+    Clone,
 )]
 #[diesel(belongs_to(User))]
 #[diesel(table_name = recipe)]
