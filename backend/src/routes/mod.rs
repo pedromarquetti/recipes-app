@@ -65,6 +65,8 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::body::json())
         .and_then(delete_user);
 
+    let cors = warp::cors().allow_any_origin();
+
     create_recipe
         .or(create_recipe_step)
         .or(delete_recipe)
@@ -72,4 +74,5 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .or(create_user)
         .or(delete_user)
         .or(view_recipe)
+        .with(cors)
 }
