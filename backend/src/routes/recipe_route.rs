@@ -37,11 +37,12 @@ pub async fn delete_recipe(
         None => return Err(Error::payload_error("must specify recipe id to delete").into()),
     }
 }
+
 pub async fn view_recipe(
     db_connection: DbConnection,
     incoming_recipe: Recipe,
 ) -> Result<impl Reply, Rejection> {
-    if let Some(_) = incoming_recipe.id {
+    if incoming_recipe.id.is_some() {
         let conn = db_connection.map_err(convert_to_rejection)?;
         let recipe = query_recipe(conn, &incoming_recipe).map_err(convert_to_rejection)?;
 
