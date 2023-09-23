@@ -3,17 +3,25 @@ pub mod functions;
 pub mod schema;
 pub mod structs;
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+
+    use serde_json::{json, Value};
+
+    use crate::structs::FullRecipe;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    /// parse full recipe from Value
+    fn full_recipe_parse() {
+        let val: Value = json!(
+        {
+            "recipe":{
+                "id":2,"user_id":null,"recipe_name":"Batata Frita","recipe_ingredients":["batata","oleo"],"recipe_observations":null
+            },
+            "steps":
+            [{"id":8,"recipe_id":2,"step_name":"esquentar oleo","step_instruction":"esquentar oleo","step_duration_min":6},{"id":9,"recipe_id":2,"step_name":"esquentar oleo                                    ","step_instruction":"esquentar oleo","step_duration_min":6}]
+        });
+        let full_recipe: FullRecipe = serde_json::from_value(val.clone()).expect("expected recipe");
+        assert!(full_recipe.recipe.id.is_some())
     }
 }
