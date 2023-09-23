@@ -1,28 +1,12 @@
 use db::structs::{FullRecipe, Recipe};
-
-use gloo_net::{http::Request, Error as GlooError};
 use log::{error, info};
-use serde_json::{json, Value};
 use yew::{platform::spawn_local, prelude::*};
+
+use crate::functions::recipe_functions::{fetch_recipe, ApiResponse};
 
 #[derive(Properties, PartialEq)]
 pub struct RecipeProps {
     pub recipe_id: i32,
-}
-
-async fn fetch_recipe(recipe_id: i32) -> Result<Value, GlooError> {
-    let req = Request::post("http://localhost:3000/api/view/recipe/")
-        .json(&json!({
-            "id":recipe_id,
-            "recipe_name": "",
-            "recipe_ingredients": [""],
-        }))?
-        .send()
-        .await?;
-    // TODO make it less generic
-    let res = req.json::<Value>().await?;
-
-    Ok(res)
 }
 
 #[function_component(RecipePage)]
@@ -49,7 +33,14 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
             spawn_local(async move {
                 match fetch_recipe(recipe_id).await {
                     Ok(ok_fetch) => {
-                        info!("ok fetch: {}", ok_fetch);
+                        info!("ok fetch,");
+                        info!("TODO: implement recipe handling here")
+                        // match ok_fetch {
+                        // ApiResponse::ErrorMessage(msg) => error!("{:?}", msg),
+                        // ApiResponse::OkRecipe(ok) => {
+                        //     let recipe: FullRecipe = ok.into();
+                        //     info!("{:?}", ok)
+                        // }
                     }
                     Err(err_fetching) => {
                         error!("error fetching! {:#?}", err_fetching);

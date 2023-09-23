@@ -4,6 +4,7 @@ use yew::{prelude::*, Renderer};
 use yew_router::prelude::*;
 
 pub mod components;
+pub mod functions;
 pub mod pages;
 
 /// Main App function
