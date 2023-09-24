@@ -1,6 +1,5 @@
-use crate::{components::go_home::GoHome, pages::Route};
+use crate::components::go_home::GoHome;
 use yew::prelude::*;
-use yew_router::prelude::*;
 
 #[function_component(NavBar)]
 pub fn navbar() -> Html {
@@ -9,7 +8,6 @@ pub fn navbar() -> Html {
         <GoHome/>
 
         <p>{"todo: implement user login"}</p>
-
         </nav>
     }
 }
