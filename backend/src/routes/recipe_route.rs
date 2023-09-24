@@ -14,10 +14,10 @@ pub async fn create_recipe(
 ) -> Result<impl Reply, Rejection> {
     let conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
-    let id = create_recipe_query(conn, &recipe).map_err(convert_to_rejection)?;
+    let created_recipe = create_recipe_query(conn, &recipe).map_err(convert_to_rejection)?;
 
     Ok(warp::reply::json(&json!({
-        "msg": format!("created recipe {}, with id {}", recipe.recipe_name, id)
+        "msg": format!("created recipe {}, with id {}", recipe.recipe_name, created_recipe.id.unwrap())
     })))
 }
 

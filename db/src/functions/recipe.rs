@@ -1,5 +1,5 @@
-use crate::schema::recipe::dsl as recipe_dsl;
 use crate::schema::recipe_step::dsl as step_dsl;
+use crate::{schema::recipe::dsl as recipe_dsl, structs::User};
 
 use diesel::prelude::*;
 
@@ -11,11 +11,10 @@ use crate::{
 pub fn create_recipe_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
-) -> Result<usize, DieselError> {
+) -> Result<Recipe, DieselError> {
     let recipe_id = diesel::insert_into(recipe_dsl::recipe)
         .values(incoming_recipe)
-        .returning(recipe_dsl::id)
-        .execute(&mut conn)?;
+        .get_result::<Recipe>(&mut conn)?;
 
     Ok(recipe_id)
 }
