@@ -12,11 +12,9 @@ pub fn create_recipe_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
 ) -> Result<Recipe, DieselError> {
-    let recipe_id = diesel::insert_into(recipe_dsl::recipe)
+    Ok(diesel::insert_into(recipe_dsl::recipe)
         .values(incoming_recipe)
-        .get_result::<Recipe>(&mut conn)?;
-
-    Ok(recipe_id)
+        .get_result::<Recipe>(&mut conn)?)
 }
 
 pub fn delete_recipe_query(
@@ -46,4 +44,13 @@ pub fn query_recipe(
         recipe: query_recipe,
         steps: query_steps,
     })
+}
+
+pub fn fuzzy_query(
+    mut conn: PooledPgConnection,
+    incoming_recipe: &Recipe,
+) -> Result<Vec<Recipe>, DieselError> {
+    Ok(recipe_dsl::recipe
+        .filter(recipe_dsl::recipe_name.like(format!("%{:}%", incoming_recipe.recipe_name)))
+        .get_results(&mut conn)?)
 }

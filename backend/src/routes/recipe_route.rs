@@ -4,7 +4,7 @@ use warp::{Rejection, Reply};
 use crate::error::{convert_to_rejection, Error};
 use db::{
     db_pool::{DbConnection, PooledPgConnection},
-    functions::recipe::{create_recipe_query, delete_recipe_query, query_recipe},
+    functions::recipe::{create_recipe_query, delete_recipe_query, fuzzy_query, query_recipe},
     structs::{FullRecipe, Recipe},
 };
 
@@ -50,4 +50,13 @@ pub async fn view_recipe(
     } else {
         Err(Error::payload_error("Recipe id not specified!").into())
     }
+}
+pub async fn fuzzy_query_recipe(
+    db_connection: DbConnection,
+    incoming_recipe: Recipe,
+) -> Result<impl Reply, Rejection> {
+    let conn = db_connection.map_err(convert_to_rejection)?;
+    let recipe = fuzzy_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+
+    Ok(warp::reply::json::<Vec<Recipe>>(&recipe))
 }

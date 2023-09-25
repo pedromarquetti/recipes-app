@@ -7,7 +7,7 @@ use db::db_pool::Pool;
 use warp::{path, Filter, Rejection, Reply};
 
 use self::{
-    recipe_route::{delete_recipe, view_recipe},
+    recipe_route::{delete_recipe, fuzzy_query_recipe, view_recipe},
     step_route::delete_step,
     user_route::{create_user, delete_user},
 };
@@ -36,6 +36,12 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(view_recipe);
+    let fuzzy_query = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "get" / "recipes"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(fuzzy_query_recipe);
 
     // recipe step endpoints
     let create_recipe_step = warp::post()
@@ -69,6 +75,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
 
     create_recipe
         .or(create_recipe_step)
+        .or(fuzzy_query)
         .or(delete_recipe)
         .or(delete_recipe_step)
         .or(create_user)
