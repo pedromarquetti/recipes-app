@@ -51,6 +51,6 @@ pub fn fuzzy_query(
     incoming_recipe: &Recipe,
 ) -> Result<Vec<Recipe>, DieselError> {
     Ok(recipe_dsl::recipe
-        .filter(recipe_dsl::recipe_name.like(format!("%{:}%", incoming_recipe.recipe_name)))
+        .filter(recipe_dsl::recipe_name.like(format!("{:}%", incoming_recipe.recipe_name)))
         .get_results(&mut conn)?)
 }
