@@ -1,4 +1,7 @@
-use crate::pages::{switch, Route};
+use crate::{
+    components::navbar::NavBar,
+    pages::{switch, Route},
+};
 
 use yew::{prelude::*, Renderer};
 use yew_router::prelude::*;
@@ -12,6 +15,7 @@ pub mod pages;
 fn App() -> Html {
     html! {
         <BrowserRouter>
+        <NavBar />
         <Switch<Route> render={switch} />
         </BrowserRouter>
     }
