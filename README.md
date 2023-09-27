@@ -14,4 +14,5 @@ In the future I'll implement a Docker setup for easier deployment, for now, run
 
 ## Useful links
 
-1. https://blog.logrocket.com/full-stack-rust-a-complete-tutorial-with-examples/
+1. [Official Yew docs](https://yew.rs/docs/tutorial#fetching-data-using-external-rest-api)
+1. [Tutorial/starting point (for me at least)](https://blog.logrocket.com/full-stack-rust-a-complete-tutorial-with-examples/)
