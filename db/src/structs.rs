@@ -14,11 +14,13 @@ use serde::{ser::SerializeStruct, Deserialize, Serialize};
     Identifiable,
     Associations,
     Debug,
+    Clone,
     PartialEq,
     Insertable,
 )]
 #[diesel(table_name = recipe_step)]
 #[diesel(belongs_to(Recipe))]
+
 pub struct Step {
     pub id: Option<i32>,
     pub recipe_id: i32,
@@ -41,6 +43,7 @@ pub struct Step {
 )]
 #[diesel(belongs_to(User))]
 #[diesel(table_name = recipe)]
+
 pub struct Recipe {
     pub id: Option<i32>,
     pub user_id: Option<i32>,
@@ -49,23 +52,11 @@ pub struct Recipe {
     pub recipe_observations: Option<Vec<String>>,
 }
 
-#[derive(Deserialize, Queryable, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Queryable, Debug, PartialEq)]
 /// used to represent a recipe with its steps
 pub struct FullRecipe {
     pub recipe: Recipe,
     pub steps: Vec<Step>,
-}
-
-impl Serialize for FullRecipe {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("FullRecipe", 2)?;
-        s.serialize_field("recipe", &self.recipe)?;
-        s.serialize_field("steps", &self.steps)?;
-        s.end()
-    }
 }
 
 #[derive(Deserialize, Queryable, Selectable, Insertable, Identifiable, Debug, PartialEq)]
