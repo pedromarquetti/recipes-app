@@ -4,23 +4,18 @@ use crate::schema::{recipe, recipe_step, recipe_users};
 
 use diesel::prelude::*;
 
-use serde::{ser::SerializeStruct, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    Serialize,
-    Deserialize,
-    Queryable,
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(not(target_arch="wasm32"), 
+    derive(Queryable,
     Selectable,
     Identifiable,
     Associations,
-    Debug,
-    Clone,
-    PartialEq,
-    Insertable,
+    Insertable,),
+    diesel(table_name = recipe_step),
+    diesel(belongs_to(Recipe))
 )]
-#[diesel(table_name = recipe_step)]
-#[diesel(belongs_to(Recipe))]
-
 pub struct Step {
     pub id: Option<i32>,
     pub recipe_id: i32,
@@ -29,21 +24,12 @@ pub struct Step {
     pub step_duration_min: i32,
 }
 
-#[derive(
-    Queryable,
-    Serialize,
-    Deserialize,
-    Debug,
-    Selectable,
-    Associations,
-    Insertable,
-    Identifiable,
-    PartialEq,
-    Clone,
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[cfg_attr(not(target_arch = "wasm32"), 
+    derive(Queryable,Selectable,Associations,Insertable,Identifiable,),
+    diesel(belongs_to(User)),
+    diesel(table_name = recipe),
 )]
-#[diesel(belongs_to(User))]
-#[diesel(table_name = recipe)]
-
 pub struct Recipe {
     pub id: Option<i32>,
     pub user_id: Option<i32>,
@@ -52,15 +38,21 @@ pub struct Recipe {
     pub recipe_observations: Option<Vec<String>>,
 }
 
-#[derive(Deserialize, Serialize, Queryable, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[cfg_attr(not(target_arch = "wasm32"), derive(Queryable))]
+
 /// used to represent a recipe with its steps
 pub struct FullRecipe {
     pub recipe: Recipe,
     pub steps: Vec<Step>,
 }
 
-#[derive(Deserialize, Queryable, Selectable, Insertable, Identifiable, Debug, PartialEq)]
-#[diesel(table_name = recipe_users)]
+#[derive(Deserialize, Debug, PartialEq)]
+#[cfg_attr(not(target_arch="wasm32"), 
+    derive( Queryable, Selectable, Insertable, Identifiable),
+    diesel(table_name = recipe_users)
+)]
+
 pub struct User {
     pub id: Option<i32>,
     pub user_name: String,
