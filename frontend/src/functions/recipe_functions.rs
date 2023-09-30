@@ -43,16 +43,6 @@ pub struct TestFullRecipe {
 // pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse, GlooError> {
 pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse, GlooError> {
     let req = Request::post("http://localhost:3000/api/view/recipe/")
-        // .json::<FullRecipe>(&FullRecipe {
-        //     recipe: Recipe {
-        //         id: Some(recipe_id),
-        //         user_id: None,
-        //         recipe_name: "".into(),
-        //         recipe_ingredients: vec![],
-        //         recipe_observations: None,
-        //     },
-        //     steps: vec![],
-        // })?
         .json(&json!({
             "id":recipe_id,
             "recipe_name": "",
@@ -61,38 +51,23 @@ pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse, GlooError> {
         .send()
         .await?;
 
-    // let res = req.json::<Value>().await?;
-    let res = req.text().await?;
+    let res: Value = req.json().await?;
 
-    let json: Value = serde_json::from_str(&res).map_err(|e| {
-        error!("Parsing response json error occurred: {:?}", e.to_string());
-        GlooError::SerdeError(e)
-    })?;
-
-    if let Some(err) = json.get("error") {
-        error!("recipe not found!");
-        let error: String = serde_json::from_value(err.clone()).map_err(|e| {
-            error!("an error occurred:{:?}", e.to_string());
-            GlooError::SerdeError(e)
-        })?;
-        debug!("{:?}", error);
+    if let Some(err) = res.get("error") {
         // recipe not found
-        Ok(ApiResponse::ErrorMessage(error))
+        error!("recipe not found!");
+        Ok(ApiResponse::ErrorMessage(
+            serde_json::from_value(err.clone()).map_err(|e| {
+                error!("an error occurred:{:?}", e.to_string());
+                GlooError::SerdeError(e)
+            })?,
+        ))
     } else {
-        let recipe: FullRecipe = serde_json::from_value(json).map_err(|e| {
-            error!("an error occurred:{:?}", e.to_string());
-            GlooError::SerdeError(e)
-        })?;
-        debug!(" json data {:?}", recipe);
-        Ok(ApiResponse::OkRecipe(FullRecipe {
-            recipe: Recipe {
-                id: recipe.recipe.id,
-                user_id: recipe.recipe.user_id,
-                recipe_name: recipe.recipe.recipe_name,
-                recipe_ingredients: recipe.recipe.recipe_ingredients,
-                recipe_observations: recipe.recipe.recipe_observations,
+        Ok(ApiResponse::OkRecipe(serde_json::from_value(res).map_err(
+            |e| {
+                error!("an error occurred:{:?}", e.to_string());
+                GlooError::SerdeError(e)
             },
-            steps: vec![],
-        }))
+        )?))
     }
 }
