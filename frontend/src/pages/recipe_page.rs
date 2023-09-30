@@ -1,8 +1,11 @@
 use db::structs::{FullRecipe, Recipe};
-use log::{error, info};
+use log::{debug, error, info};
 use yew::{platform::spawn_local, prelude::*};
 
-use crate::functions::recipe_functions::{fetch_recipe, ApiResponse};
+use crate::{
+    components::{ingredient_list_component::IngredientList, steps_component::StepsList},
+    functions::recipe_functions::{fetch_recipe, ApiResponse},
+};
 
 #[derive(Properties, PartialEq)]
 pub struct RecipeProps {
@@ -26,32 +29,42 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
         },
         steps: vec![],
     });
-    // let recipe = recipe_state.clone();
 
-    use_effect_with_deps(
-        move |_| {
-            spawn_local(async move {
-                match fetch_recipe(recipe_id).await {
-                    Ok(ok_fetch) => {
-                        info!("ok fetch,");
-                        info!("TODO: implement recipe handling here")
-                        // match ok_fetch {
-                        // ApiResponse::ErrorMessage(msg) => error!("{:?}", msg),
-                        // ApiResponse::OkRecipe(ok) => {
-                        //     let recipe: FullRecipe = ok.into();
-                        //     info!("{:?}", ok)
-                        // }
-                    }
-                    Err(err_fetching) => {
-                        error!("error fetching! {:#?}", err_fetching);
-                    }
-                }
-            });
-            || ()
-        },
-        (),
-    );
+    {
+        let recipe_state = recipe_state.clone();
 
-    html! {<></>
+        use_effect_with_deps(
+            move |_| {
+                // let recipe_state = recipe_state.clone();
+                spawn_local(async move {
+                    match fetch_recipe(recipe_id).await {
+                        Ok(ok_fetch) => match ok_fetch {
+                            ApiResponse::OkRecipe(ok_recipe) => {
+                                debug!("{:?}", &ok_recipe.steps);
+                                recipe_state.set(ok_recipe)
+                            }
+                            ApiResponse::ErrorMessage(err) => {
+                                error!("{:?}", err)
+                            }
+                        },
+                        Err(err_fetching) => {
+                            error!("error fetching! {:#?}", err_fetching);
+                        }
+                    }
+                });
+                || ()
+            },
+            (),
+        );
+    }
+
+    html! {
+        <div class="recipe">
+            <h1 class="title">{recipe_state.recipe.recipe_name.clone()}</h1>
+            <IngredientList ingredients={recipe_state.recipe.recipe_ingredients.clone()}/>
+            <StepsList steps={recipe_state.steps.clone()}/>
+
+
+        </div>
     }
 }
