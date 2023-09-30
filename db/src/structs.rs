@@ -40,9 +40,8 @@ pub struct Recipe {
     pub recipe_observations: Option<Vec<String>>,
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 #[cfg_attr(not(target_arch = "wasm32"), derive(Queryable))]
-
 /// used to represent a recipe with its steps
 pub struct FullRecipe {
     pub recipe: Recipe,
