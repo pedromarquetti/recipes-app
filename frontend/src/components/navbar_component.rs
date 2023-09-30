@@ -1,4 +1,4 @@
-use crate::components::go_home::GoHome;
+use crate::components::go_home_component::GoHome;
 use yew::prelude::*;
 
 #[function_component(NavBar)]

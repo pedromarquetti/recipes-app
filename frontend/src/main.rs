@@ -1,5 +1,5 @@
 use crate::{
-    components::navbar::NavBar,
+    components::navbar_component::NavBar,
     pages::{switch, Route},
 };
 
