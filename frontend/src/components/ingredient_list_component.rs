@@ -16,7 +16,7 @@ pub fn ingredients_list(IngredientsListProps { ingredients }: &IngredientsListPr
         .collect();
     html! {
         <>
-        <h1 class="ingredients">{"ingredients"}</h1>
+        <h2 class="ingredients">{"Ingredients"}</h2>
         <ul class="list">
             {l}
         </ul>

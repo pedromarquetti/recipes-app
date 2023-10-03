@@ -39,10 +39,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
                 spawn_local(async move {
                     match fetch_recipe(recipe_id).await {
                         Ok(ok_fetch) => match ok_fetch {
-                            ApiResponse::OkRecipe(ok_recipe) => {
-                                debug!("{:?}", &ok_recipe.steps);
-                                recipe_state.set(ok_recipe)
-                            }
+                            ApiResponse::OkRecipe(ok_recipe) => recipe_state.set(ok_recipe),
                             ApiResponse::ErrorMessage(err) => {
                                 error!("{:?}", err)
                             }
@@ -59,12 +56,12 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     }
 
     html! {
-        <div class="recipe">
-            <h1 class="title">{recipe_state.recipe.recipe_name.clone()}</h1>
-            <IngredientList ingredients={recipe_state.recipe.recipe_ingredients.clone()}/>
-            <StepsList steps={recipe_state.steps.clone()}/>
+            <div class="recipe">
+                <h1 class="title">{recipe_state.recipe.recipe_name.clone()}</h1>
+                <IngredientList ingredients={recipe_state.recipe.recipe_ingredients.clone()}/>
+                <StepsList steps={recipe_state.steps.clone()}/>
 
 
-        </div>
+            </div>
     }
 }

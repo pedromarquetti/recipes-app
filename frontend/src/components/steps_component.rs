@@ -20,11 +20,11 @@ pub fn steps_list(StepListProps { steps }: &StepListProps) -> Html {
         })
         .collect();
     html! {
-        <div>
-        <h1 class="ingredients">{"Steps"}</h1>
+    <>
+        <h2 class="steps">{"Steps"}</h2>
         <ol class="list">
             {l}
         </ol>
-        </div>
+    </>
     }
 }
