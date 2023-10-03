@@ -1,3 +1,5 @@
+use std::env;
+
 use crate::{
     components::navbar_component::NavBar,
     pages::{switch, Route},
@@ -10,13 +12,20 @@ pub mod components;
 pub mod functions;
 pub mod pages;
 
+pub fn get_ip() -> String {
+    env::var("API_IP").unwrap_or("http://127.0.0.1:3000".into())
+}
+
 /// Main App function
 #[function_component]
 fn App() -> Html {
     html! {
+
         <BrowserRouter>
-        <NavBar />
-        <Switch<Route> render={switch} />
+            <NavBar />
+            <div class="container">
+            <Switch<Route>  render={switch} />
+            </div>
         </BrowserRouter>
     }
 }
