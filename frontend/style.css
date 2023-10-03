@@ -3,12 +3,26 @@ body {
 	width: 100%;
 	height: 100%;
 	margin: 0;
+
+	background: #939393;
+	background: -webkit-linear-gradient(
+		top,
+		#939393 0%,
+		#cecece 80%,
+		#d8d8d8 100%
+	);
+	background: linear-gradient(to bottom, #939393 0%, #cecece 80%, #d8d8d8 100%);
 }
 * {
 	font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
 		"Lucida Sans Unicode", Geneva, Verdana, sans-serif;
 }
-.main-nav {
+.top-nav {
+	background: #898989;
+
+	-webkit-box-shadow: -1px 15px 17px -2px rgba(0, 0, 0, 0.34);
+	box-shadow: -1px 15px 17px -2px rgba(0, 0, 0, 0.34);
+
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -17,8 +31,6 @@ body {
 	align-items: center;
 }
 .home-page {
-	height: 100%;
-
 	display: flex;
 	flex-direction: column;
 	align-content: center;
