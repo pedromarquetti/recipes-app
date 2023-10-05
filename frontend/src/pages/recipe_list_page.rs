@@ -1,32 +1,48 @@
 use db::structs::{FullRecipe, Recipe};
-use yew::prelude::*;
+use log::{debug, error, info};
+use yew::{platform::spawn_local, prelude::*};
+
+use crate::{
+    components::recipe_card_component::RecipeCard, functions::recipe_functions::fuzzy_list_recipe,
+};
 
 #[derive(Properties, PartialEq)]
 pub struct RecipeListProps {
-    pub recipes: Vec<FullRecipe>,
+    pub recipe_name: String,
 }
 
 /// iterates through provided recipe list and displays them
 #[function_component(RecipeList)]
-pub fn recipe_list(RecipeListProps { recipes }: &RecipeListProps) -> Html {
-    recipes
+pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
+    let name = recipe_name.clone();
+    let recipe_state = use_state(|| vec![]);
+    {
+        let recipe_state = recipe_state.clone();
+        use_effect_with_deps(
+            move |_| {
+                spawn_local(async move {
+                    match fuzzy_list_recipe(name).await {
+                        Ok(ok_recipes) => {
+                            info!("OK");
+                            recipe_state.set(ok_recipes)
+                        }
+                        Err(err) => {
+                            error!("err")
+                        }
+                    }
+                });
+                || ()
+            },
+            (),
+        )
+    }
+    debug!("{:#?}", recipe_state);
+
+    recipe_state
         .iter()
         .map(|recipe| {
-            let ingredients:Html = recipe.recipe.recipe_ingredients.iter().map(|ingredient| html! {
-                <li class="ingredient">
-                    <p>{ingredient}</p>
-                </li>
-            }).collect();
             html! {
-                <div class="recipe" key={recipe.recipe.id.unwrap()}>
-                    <h1>{format!("Recipe: {}, by:{} (this is user id, user parsing will be implemented)",recipe.recipe.recipe_name,recipe.recipe.user_id.unwrap())}</h1>
-                    <ul class="ingredient-list">
-                    {ingredients}
-                    </ul>
-
-
-                </div>
-
+            <RecipeCard recipe={recipe.clone()}/>
             }
         })
         .collect()

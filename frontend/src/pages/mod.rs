@@ -1,12 +1,12 @@
-mod home;
+pub mod home;
 pub mod recipe_list_page;
-mod recipe_page;
+pub mod recipe_page;
 
 use recipe_page::RecipePage;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use self::home::Home;
+use self::{home::Home, recipe_list_page::RecipeList};
 
 /// # Routes enum
 ///
@@ -34,7 +34,9 @@ pub fn switch(route: Route) -> Html {
     match route {
         Route::Home => html! {<Home />},
         Route::NotFound => html! {<>{"404"}</>},
-        Route::RecipeList { name } => html! {<></>},
+        Route::RecipeList { name } => html! {
+        <RecipeList recipe_name={name}/>
+        },
         Route::Recipe { id } => {
             html! {
             <RecipePage recipe_id={id}/>

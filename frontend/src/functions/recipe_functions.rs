@@ -1,10 +1,9 @@
-use std::{collections::HashMap, convert::Infallible};
-
-use db::structs::{FullRecipe, Recipe, Step};
+use db::structs::{FullRecipe, Recipe};
 use gloo_net::{http::Request, Error as GlooError};
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use yew::Html;
 
 #[derive(Debug)]
 pub enum ApiResponse {
@@ -42,7 +41,8 @@ pub struct TestFullRecipe {
 /// 1. error message from backend
 // pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse, GlooError> {
 pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse, GlooError> {
-    let req = Request::post("http://localhost:3000/api/view/recipe/")
+    //todo> make this IP modifiable
+    let req = Request::post("http://192.168.1.115:3000/api/view/recipe/")
         .json(&json!({
             "id":recipe_id,
             "recipe_name": "",
@@ -70,4 +70,17 @@ pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse, GlooError> {
             },
         )?))
     }
+}
+pub async fn fuzzy_list_recipe(name: String) -> Result<Vec<Recipe>, GlooError> {
+    let req = Request::post("http://192.168.1.115:3000/api/get/recipes")
+        .json::<Recipe>(&Recipe {
+            id: None,
+            recipe_name: name,
+            recipe_ingredients: vec![],
+            user_id: None,
+            recipe_observations: None,
+        })?
+        .send()
+        .await?;
+    req.json::<Vec<Recipe>>().await
 }

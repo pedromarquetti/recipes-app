@@ -3,7 +3,10 @@ use log::{debug, error, info};
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
-    components::{ingredient_list_component::IngredientList, steps_component::StepsList},
+    components::{
+        ingredient_list_component::IngredientList, recipe_component::RecipeComponent,
+        steps_component::StepsList,
+    },
     functions::recipe_functions::{fetch_recipe, ApiResponse},
 };
 
@@ -56,12 +59,6 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     }
 
     html! {
-            <div class="recipe">
-                <h1 class="title">{recipe_state.recipe.recipe_name.clone()}</h1>
-                <IngredientList ingredients={recipe_state.recipe.recipe_ingredients.clone()}/>
-                <StepsList steps={recipe_state.steps.clone()}/>
-
-
-            </div>
+        <RecipeComponent recipe={(*recipe_state).clone()}/>
     }
 }
