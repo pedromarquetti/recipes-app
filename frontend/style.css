@@ -4,6 +4,7 @@ body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
+	overflow: auto;
 
 	background: #939393;
 	background: -webkit-linear-gradient(
@@ -12,7 +13,8 @@ body {
 		#cecece 80%,
 		#d8d8d8 100%
 	);
-	background: linear-gradient(to bottom, #939393 0%, #cecece 80%, #d8d8d8 100%);
+	background: linear-gradient(to bottom, #939393 0%, #cecece 80%, #d8d8d8 100%)
+		no-repeat;
 }
 h1 {
 	text-align: center;
@@ -23,6 +25,22 @@ h2 {
 * {
 	font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
 		"Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+}
+ol,
+ul {
+	width: 100%;
+	padding: 0;
+	margin: 0;
+}
+li {
+	list-style-type: none;
+}
+a {
+	background: #898989;
+	border-radius: 200px;
+	width: fit-content;
+	text-decoration: none;
+	color: black;
 }
 .top-nav {
 	background: #898989;
@@ -52,13 +70,13 @@ h2 {
 }
 .container {
 	margin-top: 51px;
-	height: 100%;
+	min-height: 100%;
 	width: 100%;
 
 	display: flex;
 	justify-content: center;
-	flex-direction: row;
-	flex-wrap: wrap;
+	flex-direction: column;
+	flex-wrap: nowrap;
 	align-items: center;
 	align-content: center;
 }
@@ -73,7 +91,23 @@ h2 {
 
 	display: flex;
 	flex-direction: column;
+	flex-wrap: wrap;
+	align-content: center;
+	justify-content: space-evenly;
+	align-items: center;
+	/* 
+	display: flex;
+	flex-direction: column;
 	flex-wrap: nowrap;
 	align-content: flex-start;
-	justify-content: flex-start;
+	justify-content: flex-start; */
+}
+.recipes-list {
+	min-height: 100%;
+	min-width: 100%;
+}
+.recipe-card {
+	width: 90%;
+	height: 200px;
+	margin: auto;
 }

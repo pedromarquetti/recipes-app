@@ -36,14 +36,26 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
             (),
         )
     }
-    debug!("{:#?}", recipe_state);
 
-    recipe_state
+    let list: Html = recipe_state
         .iter()
         .map(|recipe| {
             html! {
-            <RecipeCard recipe={recipe.clone()}/>
+
+                <li>
+                    <RecipeCard recipe={recipe.clone()}/>
+                </li>
             }
         })
-        .collect()
+        .collect();
+    html! {
+        <>
+            <h1>{format!("Found {} recipes",recipe_state.clone().len())}</h1>
+            <div class="recipes-list">
+            <ul>
+            {list}
+            </ul>
+            </div>
+        </>
+    }
 }
