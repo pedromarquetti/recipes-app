@@ -2,7 +2,7 @@ use std::env;
 
 use crate::{
     components::navbar_component::NavBar,
-    pages::{switch, Route},
+    views::{switch, Route},
 };
 
 use yew::{prelude::*, Renderer};
@@ -10,7 +10,7 @@ use yew_router::prelude::*;
 
 pub mod components;
 pub mod functions;
-pub mod pages;
+pub mod views;
 
 pub fn get_ip() -> String {
     env::var("API_IP").unwrap_or("http://127.0.0.1:3000".into())

@@ -35,6 +35,12 @@ ul {
 li {
 	list-style-type: none;
 }
+input {
+	border-radius: 200px;
+}
+button {
+	border-radius: 200px;
+}
 a {
 	background: #898989;
 	border-radius: 200px;

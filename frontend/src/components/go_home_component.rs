@@ -1,4 +1,4 @@
-use crate::pages::Route;
+use crate::views::Route;
 use yew::prelude::*;
 use yew_router::prelude::*;
 

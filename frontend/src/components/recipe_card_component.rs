@@ -1,5 +1,5 @@
 use super::{ingredient_list_component::IngredientList, steps_component::StepsList};
-use crate::pages::Route;
+use crate::views::Route;
 use db::structs::Recipe;
 use yew::prelude::*;
 use yew::prelude::*;
