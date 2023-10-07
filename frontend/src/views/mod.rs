@@ -1,12 +1,17 @@
+pub mod error;
 pub mod home;
-pub mod recipe_list_page;
-pub mod recipe_page;
+pub mod recipe;
+pub mod recipe_list;
 
-use recipe_page::RecipePage;
+use recipe::RecipePage;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use self::{home::Home, recipe_list_page::RecipeList};
+use self::{
+    error::{ErrorPage, ErrorType},
+    home::Home,
+    recipe_list::RecipeList,
+};
 
 /// # Routes enum
 ///
@@ -33,7 +38,9 @@ pub enum Route {
 pub fn switch(route: Route) -> Html {
     match route {
         Route::Home => html! {<Home />},
-        Route::NotFound => html! {<>{"404"}</>},
+        Route::NotFound => html! {
+            <ErrorPage error_type={ErrorType::NotFound} text={"Not Found"}/>
+        },
         Route::RecipeList { name } => html! {
         <RecipeList recipe_name={name}/>
         },

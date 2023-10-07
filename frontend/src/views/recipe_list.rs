@@ -3,7 +3,9 @@ use log::{debug, error, info};
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
-    components::recipe_card_component::RecipeCard, functions::recipe_functions::fuzzy_list_recipe,
+    components::recipe_card_component::RecipeCard,
+    functions::recipe_functions::fuzzy_list_recipe,
+    views::error::{ErrorPage, ErrorType},
 };
 
 #[derive(Properties, PartialEq)]
@@ -22,12 +24,9 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
             move |_| {
                 spawn_local(async move {
                     match fuzzy_list_recipe(name).await {
-                        Ok(ok_recipes) => {
-                            info!("OK");
-                            recipe_state.set(ok_recipes)
-                        }
+                        Ok(ok_recipes) => recipe_state.set(ok_recipes),
                         Err(err) => {
-                            error!("err")
+                            error!("err");
                         }
                     }
                 });
@@ -36,7 +35,11 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
             (),
         )
     }
-
+    if recipe_state.clone().len() == 0 {
+        return html! {
+        <ErrorPage text={"No Recipes Found"} error_type={ErrorType::NotFound}/>
+        };
+    }
     let list: Html = recipe_state
         .iter()
         .map(|recipe| {
@@ -48,6 +51,7 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
             }
         })
         .collect();
+
     html! {
         <>
             <h1>{format!("Found {} recipes",recipe_state.clone().len())}</h1>
