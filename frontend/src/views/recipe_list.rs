@@ -56,11 +56,9 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
     html! {
         <>
             <h1>{format!("Found {} recipes",recipe_state.clone().len())}</h1>
-            <div class="recipes-list">
-            <ul>
+            <ul class="recipes-list">
             {list}
             </ul>
-            </div>
         </>
     }
 }

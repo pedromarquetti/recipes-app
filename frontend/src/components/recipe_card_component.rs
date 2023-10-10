@@ -13,7 +13,7 @@ pub struct RecipeProps {
 /// Simplified card representing Recipe, containing a button that redirects to the full recipe
 pub fn recipe_card(RecipeProps { recipe }: &RecipeProps) -> Html {
     html! {
-    <div class="recipe-card recipe">
+    <div class="recipe recipe-card">
         <h1 class="title">{recipe.recipe_name.clone()}</h1>
         <IngredientList ingredients={recipe.recipe_ingredients.clone()} />
         <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id.unwrap() }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>
