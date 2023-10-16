@@ -25,6 +25,16 @@ pub enum InputType {
 }
 
 #[function_component(Input)]
+/// \<Input\/\> component
+/// # Params:
+/// input_placeholder -> what will be shown in the Input element as a placeholder
+///
+/// input_name -> \<input\> name (duh)
+///
+/// input_type -> InputType enum `usecrate::components::input_component::InputType`)
+///
+/// input_node_ref -> uses use_node_ref(). Used for event handling with CallBack (https://yew.rs/docs/concepts/html/events#using-noderef)
+///
 pub fn input(props: &InputProps) -> Html {
     let InputProps {
         input_placeholder,
@@ -38,6 +48,7 @@ pub fn input(props: &InputProps) -> Html {
             name={input_name.clone()}
             placeholder={input_placeholder.clone()}
             ref={input_node_ref.clone()}
+
         />
     }
 }
