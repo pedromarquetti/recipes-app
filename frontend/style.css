@@ -16,11 +16,16 @@ body {
 	background: linear-gradient(to bottom, #939393 0%, #cecece 80%, #d8d8d8 100%)
 		no-repeat;
 }
+form {
+	width: 100%;
+}
 h1 {
 	text-align: center;
+	margin: 0;
 }
 h2 {
 	margin: 10px;
+	width: 100%;
 }
 * {
 	overflow-wrap: anywhere;
@@ -37,17 +42,21 @@ li {
 	list-style-type: none;
 }
 input {
+	width: 50%;
+
 	border-radius: 200px;
+	border: none;
 }
 button {
 	border-radius: 200px;
+	border: none;
 }
 a {
-	background: #898989;
 	border-radius: 200px;
 	width: fit-content;
 	text-decoration: none;
 	color: black;
+	margin: 10px;
 }
 .top-nav {
 	background: #898989;
@@ -55,7 +64,7 @@ a {
 	position: fixed; /* Set the navbar to fixed position  */
 	top: 0; /* Position the navbar at the top of the page  */
 	width: 100%; /* Full width  */
-	/* height: 50px; */
+	height: 50px;
 
 	-webkit-box-shadow: -1px 15px 17px -2px rgba(0, 0, 0, 0.34);
 	box-shadow: -1px 15px 17px -2px rgba(0, 0, 0, 0.34);
@@ -68,6 +77,7 @@ a {
 	align-items: center;
 }
 .home-page {
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 	align-content: center;
@@ -76,7 +86,7 @@ a {
 	align-items: center;
 }
 .container {
-	margin-top: 51px;
+	margin-top: 50px;
 	min-height: 100%;
 	width: 100%;
 
@@ -92,7 +102,7 @@ a {
 	border-radius: 20px;
 	border-color: black;
 
-	width: 90%;
+	width: 100%;
 	height: 80%;
 	margin-top: 10px;
 
@@ -106,6 +116,10 @@ a {
 .recipes-list {
 	min-height: 100%;
 	min-width: 100%;
+}
+.steps-list {
+	width: 100%;
+	display: flex;
 }
 .recipe-card {
 	margin: 20px;
