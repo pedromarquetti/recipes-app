@@ -1,7 +1,6 @@
-use super::{ingredient_list_component::IngredientList, steps_component::StepsList};
-use crate::views::Route;
+use super::ingredient_list_component::IngredientList;
+use crate::{components::recipe_title::RecipeTitle, views::Route};
 use db::structs::Recipe;
-use yew::prelude::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -14,9 +13,12 @@ pub struct RecipeProps {
 pub fn recipe_card(RecipeProps { recipe }: &RecipeProps) -> Html {
     html! {
     <div class="recipe recipe-card">
-        <h1 class="title">{recipe.recipe_name.clone()}</h1>
+        <RecipeTitle recipe={recipe.clone()}/>
+
         <IngredientList ingredients={recipe.recipe_ingredients.clone()} />
-        <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id.unwrap() }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>
+        <div class="card-interaction">
+            <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id.unwrap() }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>
+        </div>
 
 
     </div>
