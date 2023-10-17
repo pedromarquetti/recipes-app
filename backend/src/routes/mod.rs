@@ -4,14 +4,7 @@ mod user_route;
 
 use crate::routes::{recipe_route::create_recipe, step_route::create_step};
 use db::db_pool::Pool;
-use log::debug;
-use warp::{
-    http::{
-        header::{HeaderMap, HeaderValue},
-        method::Method,
-    },
-    path, Filter, Rejection, Reply,
-};
+use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
 use self::{
     recipe_route::{delete_recipe, fuzzy_query_recipe, view_recipe},
