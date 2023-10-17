@@ -1,4 +1,5 @@
 use db::structs::Step;
+use log::debug;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
@@ -11,7 +12,7 @@ pub fn steps_list(StepListProps { steps }: &StepListProps) -> Html {
         .iter()
         .map(|step: &Step| {
             html! {
-                <li key={step.id.unwrap()} class="step">
+                <li id={format!("{}",step.id.unwrap())} class="step">
                 <h2>{step.step_name.clone()}</h2>
                 <p>{format!("{}min - {}",step.step_duration_min,step.step_instruction)}</p>
 
@@ -19,12 +20,13 @@ pub fn steps_list(StepListProps { steps }: &StepListProps) -> Html {
             }
         })
         .collect();
+
     html! {
-    <>
-        <h2 class="steps">{"Steps"}</h2>
-        <ol class="list">
+    <div class="steps-list">
+        <h2 >{"Steps"}</h2>
+        <ol>
             {l}
         </ol>
-    </>
+    </div>
     }
 }
