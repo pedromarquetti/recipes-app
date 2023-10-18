@@ -30,16 +30,16 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
                         }
                     }
                 });
-                || ()
             },
             (),
         )
     }
-    if recipe_state.clone().len() == 0 {
-        return html! {
-        <ErrorPage text={"No Recipes Found"} error_type={ErrorType::NotFound}/>
-        };
-    }
+    // the code below gets executed every time because the recipe_state is not filled
+    // if recipe_state.clone().len() == 0 {
+    //     return html! {
+    //     <ErrorPage text={"No Recipes Found"} error_type={ErrorType::NotFound}/>
+    //     };
+    // }
     let list: Html = recipe_state
         .iter()
         .map(|recipe| {
