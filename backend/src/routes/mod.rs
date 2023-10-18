@@ -7,7 +7,7 @@ use db::db_pool::Pool;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
 use self::{
-    recipe_route::{delete_recipe, fuzzy_query_recipe, view_recipe},
+    recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::delete_step,
     user_route::{create_user, delete_user},
 };
@@ -30,7 +30,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
 
     // API endpoints
 
-    //recipe endpoints
+    // recipe endpoints
     let create_recipe = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "recipe"))
@@ -49,15 +49,20 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(view_recipe);
-
     let fuzzy_query = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "get" / "recipes"))
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(fuzzy_query_recipe);
+    let update_recipe = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "update" / "recipe"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(update_recipe);
 
-    // recipe step endpoints
+    //  step endpoints
     let create_recipe_step = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "step"))
@@ -86,6 +91,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and_then(delete_user);
 
     create_recipe
+        .or(update_recipe)
         .or(create_recipe_step)
         .or(fuzzy_query)
         .or(delete_recipe)

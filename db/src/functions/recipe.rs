@@ -1,5 +1,5 @@
+use crate::schema::recipe::dsl as recipe_dsl;
 use crate::schema::recipe_step::dsl as step_dsl;
-use crate::{schema::recipe::dsl as recipe_dsl, structs::User};
 
 use diesel::prelude::*;
 
@@ -53,4 +53,14 @@ pub fn fuzzy_query(
     Ok(recipe_dsl::recipe
         .filter(recipe_dsl::recipe_name.like(format!("{:}%", incoming_recipe.recipe_name)))
         .get_results(&mut conn)?)
+}
+
+pub fn update_recipe_query(
+    mut conn: PooledPgConnection,
+    incoming_recipe: &Recipe,
+) -> Result<Recipe, DieselError> {
+    Ok(diesel::update(recipe_dsl::recipe)
+        .filter(recipe_dsl::id.eq(incoming_recipe.id.unwrap()))
+        .set(incoming_recipe)
+        .get_result(&mut conn)?)
 }

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
     derive(Queryable,
-    Selectable,
+    Selectable,AsChangeset,
     Identifiable,
     Associations,
     Insertable,),
@@ -28,7 +28,7 @@ pub struct Step {
 // configuring attributes
 // if target_arch (architeture the code is being compiled in) is wasm32, ignore these (diesel stuff)
 #[cfg_attr(not(target_arch = "wasm32"), 
-    derive(Queryable,Selectable,Associations,Insertable,Identifiable,),
+    derive(AsChangeset,Queryable,Selectable,Associations,Insertable,Identifiable,),
     diesel(belongs_to(User)),
     diesel(table_name = recipe),
 )]
