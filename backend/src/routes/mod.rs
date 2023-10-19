@@ -8,11 +8,12 @@ use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
 use self::{
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
-    step_route::delete_step,
+    step_route::{delete_step, update_step},
     user_route::{create_user, delete_user},
 };
 
 pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    // this filter will be used to get a valid connection to the db pool
     let pool_filter = warp::any().map(move || pool.get());
 
     // setting up CORS
@@ -28,7 +29,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         // from my understanding, since this is a public API, I can allow any origin here
         .allow_any_origin();
 
-    // API endpoints
+    /* list of API endpoints */
 
     // recipe endpoints
     let create_recipe = warp::post()
@@ -75,6 +76,12 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(delete_step);
+    let update_recipe_step = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "update" / "step"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(update_step);
 
     // user endpoints
     let create_user = warp::post()
@@ -95,6 +102,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .or(create_recipe_step)
         .or(fuzzy_query)
         .or(delete_recipe)
+        .or(update_recipe_step)
         .or(delete_recipe_step)
         .or(create_user)
         .or(delete_user)
