@@ -2,6 +2,8 @@ mod recipe_route;
 mod step_route;
 mod user_route;
 
+use std::collections::HashMap;
+
 use crate::routes::{recipe_route::create_recipe, step_route::create_step};
 use db::db_pool::Pool;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
@@ -9,7 +11,7 @@ use warp::{http::method::Method, path, Filter, Rejection, Reply};
 use self::{
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
-    user_route::{create_user, delete_user},
+    user_route::{create_user, delete_user, get_user_info},
 };
 
 pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -96,6 +98,12 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(delete_user);
+    let get_user_info = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "get" / "username"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(get_user_info);
 
     create_recipe
         .or(update_recipe)
@@ -104,6 +112,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .or(delete_recipe)
         .or(update_recipe_step)
         .or(delete_recipe_step)
+        .or(get_user_info)
         .or(create_user)
         .or(delete_user)
         .or(view_recipe)
