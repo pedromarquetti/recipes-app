@@ -1,5 +1,6 @@
 use std::convert::Infallible;
 
+use bcrypt::BcryptError;
 use diesel::result::DatabaseErrorKind;
 use log::error;
 use serde_json::json;
@@ -149,5 +150,11 @@ impl From<DieselError> for Error {
             },
             err => Error::db_error(err.to_string()),
         }
+    }
+}
+
+impl From<BcryptError> for Error {
+    fn from(value: BcryptError) -> Self {
+        Error::internal_error(value.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
     }
 }

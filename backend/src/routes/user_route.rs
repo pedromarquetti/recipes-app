@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use bcrypt::hash;
 use serde_json::json;
 use warp::{reject::Rejection, reply::Reply};
 
@@ -15,6 +14,12 @@ pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply
 
     match user.validate(&user.user_pwd) {
         Ok(_) => {
+            let user = User {
+                id: user.id,
+                user_name: user.user_name,
+                // encrypting password
+                user_pwd: encrypt_pwd(&user.user_pwd).await?,
+            };
             // running query
             create_user_record(conn, &user).map_err(convert_to_rejection)?;
 
@@ -31,6 +36,7 @@ pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply
         }
     }
 }
+
 pub async fn delete_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
     let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
@@ -50,4 +56,8 @@ pub async fn get_user_info(db_conn: DbConnection, user_id: i32) -> Result<impl R
     Ok(warp::reply::json(&json!({
         "msg": usr
     })))
+}
+
+async fn encrypt_pwd(pwd: &str) -> Result<String, Rejection> {
+    Ok(hash(pwd, 4).map_err(convert_to_rejection)?)
 }
