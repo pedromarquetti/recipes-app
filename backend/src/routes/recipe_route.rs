@@ -28,16 +28,13 @@ pub async fn delete_recipe(
     incoming_recipe: Recipe,
 ) -> Result<impl Reply, Rejection> {
     let conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
-
-    match incoming_recipe.id {
-        Some(_) => {
-            delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
-            Ok(warp::reply::json(&json!({
-                "msg": format!("recipe {} deleted", incoming_recipe.recipe_name)
-            })))
-        }
-        None => return Err(Error::payload_error("must specify recipe id to delete").into()),
+    if incoming_recipe.id.is_none() {
+        return Err(Error::payload_error("must specify recipe id to delete").into());
     }
+    delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+    Ok(warp::reply::json(&json!({
+        "msg": format!("recipe {} deleted", incoming_recipe.recipe_name)
+    })))
 }
 
 pub async fn view_recipe(
