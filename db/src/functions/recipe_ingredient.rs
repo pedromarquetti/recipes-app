@@ -3,8 +3,8 @@ use crate::schema::recipe_ingredient::dsl as ingredient_dsl;
 use crate::structs::Ingredient;
 use diesel::prelude::*;
 
-/// # DB crate
-pub fn create_recipe_step_record(
+/// Ingredient DB function responsible for creating an ingredient
+pub fn create_recipe_ingredient_record(
     mut conn: PooledPgConnection,
     ingredients: &Vec<Ingredient>,
 ) -> Result<(), DieselError> {
@@ -14,19 +14,19 @@ pub fn create_recipe_step_record(
     Ok(())
 }
 
-/// # DB crate
-pub fn delete_recipe_step_record(
+/// Ingredient DB function responsible for deleting an ingredient
+pub fn delete_recipe_ingredient_record(
     mut conn: PooledPgConnection,
-    steps: &Ingredient,
+    ingredient: &Ingredient,
 ) -> Result<(), DieselError> {
     diesel::delete(ingredient_dsl::recipe_ingredient)
-        .filter(ingredient_dsl::id.eq(steps.id.unwrap()))
+        .filter(ingredient_dsl::id.eq(ingredient.id.unwrap()))
         .execute(&mut conn)?;
     Ok(())
 }
 
-/// # DB crate
-pub fn update_step_query(
+/// Ingredient DB function responsible for updating an ingredient's details
+pub fn update_ingredient_query(
     mut conn: PooledPgConnection,
     ingredients: &Ingredient,
 ) -> Result<Ingredient, DieselError> {

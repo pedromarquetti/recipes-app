@@ -1,14 +1,14 @@
+mod ingredient_route;
 mod recipe_route;
 mod step_route;
 mod user_route;
-
-use std::collections::HashMap;
 
 use crate::routes::{recipe_route::create_recipe, step_route::create_step};
 use db::db_pool::Pool;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
 use self::{
+    ingredient_route::{create_ingredient, delete_ingredient, update_ingredient},
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
     user_route::{create_user, delete_user, get_user_info},
@@ -85,6 +85,26 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::body::json())
         .and_then(update_step);
 
+    //  ingredient endpoits
+    let create_recipe_ingredient = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "create" / "ingredient"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(create_ingredient);
+    let delete_recipe_ingredient = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "delete" / "ingredient"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(delete_ingredient);
+    let update_recipe_ingredient = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "update" / "ingredient"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and_then(update_ingredient);
+
     // user endpoints
     let create_user = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
@@ -105,16 +125,22 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::body::json())
         .and_then(get_user_info);
 
-    create_recipe
+    let user_endpoints = create_user.or(get_user_info).or(delete_user);
+    let recipe_endpoints = create_recipe
         .or(update_recipe)
-        .or(create_recipe_step)
-        .or(fuzzy_query)
         .or(delete_recipe)
-        .or(update_recipe_step)
-        .or(delete_recipe_step)
-        .or(get_user_info)
-        .or(create_user)
-        .or(delete_user)
         .or(view_recipe)
+        .or(fuzzy_query);
+    let recipe_step_endpoints = create_recipe_step
+        .or(update_recipe_step)
+        .or(delete_recipe_step);
+    let recipe_ingredient_endpoints = create_recipe_ingredient
+        .or(delete_recipe_ingredient)
+        .or(update_recipe_ingredient);
+
+    user_endpoints
+        .or(recipe_endpoints)
+        .or(recipe_step_endpoints)
+        .or(recipe_ingredient_endpoints)
         .with(cors)
 }

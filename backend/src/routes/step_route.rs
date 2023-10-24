@@ -8,6 +8,20 @@ use db::{
     structs::Step,
 };
 
+pub async fn create_step(
+    db_connection: DbConnection,
+    recipe_steps: Vec<Step>,
+) -> Result<impl Reply, Rejection> {
+    let conn = db_connection.map_err(convert_to_rejection)?;
+
+    // running query
+    create_recipe_step_record(conn, &recipe_steps).map_err(convert_to_rejection)?;
+
+    Ok(warp::reply::json(&json!({
+        "msg": format!("{} steps created ", recipe_steps.len())
+    })))
+}
+
 pub async fn update_step(
     db_connection: DbConnection,
     recipe_step: Step,
@@ -24,28 +38,14 @@ pub async fn update_step(
     ))
 }
 
-pub async fn create_step(
-    db_connection: DbConnection,
-    recipe_steps: Vec<Step>,
-) -> Result<impl Reply, Rejection> {
-    let conn = db_connection.map_err(convert_to_rejection)?;
-
-    // running query
-    create_recipe_step_record(conn, &recipe_steps).map_err(convert_to_rejection)?;
-
-    Ok(warp::reply::json(&json!({
-        "msg": format!("{} steps created ", recipe_steps.len())
-    })))
-}
-
 pub async fn delete_step(
     db_connection: DbConnection,
     recipe_step: Step,
 ) -> Result<impl Reply, Rejection> {
-    let conn = db_connection.map_err(convert_to_rejection)?;
     if recipe_step.id.is_none() {
         return Err(Error::payload_error("step_id must be specified").into());
     }
+    let conn = db_connection.map_err(convert_to_rejection)?;
     // running query
     delete_recipe_step_record(conn, &recipe_step).map_err(convert_to_rejection)?;
 
