@@ -5,8 +5,17 @@ diesel::table! {
         id -> Nullable<Int4>,
         user_id -> Nullable<Int4>,
         recipe_name -> Varchar,
-        recipe_ingredients -> Array<Text>,
-        recipe_observations -> Nullable<Array<Text>>,
+        recipe_observations -> Nullable<Array<Text>>
+    }
+}
+
+diesel::table! {
+    recipe_ingredient (id) {
+        id -> Nullable<Int4>,
+        recipe_id -> Int4,
+        ingredient_name -> Varchar,
+        ingredient_quantity -> Int4,
+        quantity_unit -> Varchar,
     }
 }
 
@@ -29,6 +38,7 @@ diesel::table! {
 }
 
 diesel::joinable!(recipe -> recipe_users (user_id));
+diesel::joinable!(recipe_ingredient -> recipe (recipe_id));
 diesel::joinable!(recipe_step -> recipe (recipe_id));
 
-diesel::allow_tables_to_appear_in_same_query!(recipe, recipe_step, recipe_users,);
+diesel::allow_tables_to_appear_in_same_query!(recipe, recipe_ingredient, recipe_step, recipe_users,);

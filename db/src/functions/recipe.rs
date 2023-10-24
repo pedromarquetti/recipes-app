@@ -1,5 +1,6 @@
-use crate::schema::recipe::dsl as recipe_dsl;
+use crate::schema::recipe_ingredient::dsl as ingredient_dsl;
 use crate::schema::recipe_step::dsl as step_dsl;
+use crate::{schema::recipe::dsl as recipe_dsl, structs::Ingredient};
 
 use diesel::prelude::*;
 
@@ -17,6 +18,7 @@ pub fn create_recipe_query(
         .get_result::<Recipe>(&mut conn)?)
 }
 
+/// Deletes Recipe record based on id
 pub fn delete_recipe_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
@@ -27,7 +29,12 @@ pub fn delete_recipe_query(
 
     Ok(())
 }
-
+/// Returns full recipe with all fields
+///
+/// # Arguments
+///
+/// * `conn` -> A pooled Postgres connection
+/// * `incoming_recipe` -> Recipe struct (maybe i'll use i32 to represent the id)
 pub fn query_recipe(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
@@ -39,13 +46,18 @@ pub fn query_recipe(
     let query_steps: Vec<Step> = step_dsl::recipe_step
         .filter(step_dsl::recipe_id.eq(&incoming_recipe.id.unwrap()))
         .get_results::<Step>(&mut conn)?;
+    let query_ingredients: Vec<Ingredient> = ingredient_dsl::recipe_ingredient
+        .filter(ingredient_dsl::recipe_id.eq(incoming_recipe.id.unwrap()))
+        .get_results::<Ingredient>(&mut conn)?;
 
     Ok(FullRecipe {
         recipe: query_recipe,
+        ingredients: query_ingredients,
         steps: query_steps,
     })
 }
 
+/// Returns a list of `Recipe` struct
 pub fn fuzzy_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
@@ -55,6 +67,7 @@ pub fn fuzzy_query(
         .get_results(&mut conn)?)
 }
 
+/// Change details about Recipe (name, observations...)
 pub fn update_recipe_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,

@@ -1,6 +1,6 @@
 use std::io::Error;
 
-use crate::schema::{recipe, recipe_step, recipe_users};
+use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
 
 use diesel::prelude::*;
 
@@ -24,6 +24,24 @@ pub struct Step {
     pub step_duration_min: i32,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(not(target_arch="wasm32"), 
+    derive(Queryable,
+    Selectable,AsChangeset,
+    Identifiable,
+    Associations,
+    Insertable,),
+    diesel(table_name = recipe_ingredient),
+    diesel(belongs_to(Recipe))
+)]
+pub struct Ingredient {
+    pub id: Option<i32>,
+    pub recipe_id: i32,
+    pub ingredient_name: String,
+    pub ingredient_quantity: i32,
+    pub quantity_unit: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 // configuring attributes
 // if target_arch (architeture the code is being compiled in) is wasm32, ignore these (diesel stuff)
@@ -36,7 +54,6 @@ pub struct Recipe {
     pub id: Option<i32>,
     pub user_id: Option<i32>,
     pub recipe_name: String,
-    pub recipe_ingredients: Vec<String>,
     pub recipe_observations: Option<Vec<String>>,
 }
 
@@ -45,6 +62,7 @@ pub struct Recipe {
 /// used to represent a recipe with its steps
 pub struct FullRecipe {
     pub recipe: Recipe,
+    pub ingredients: Vec<Ingredient>,
     pub steps: Vec<Step>,
 }
 
