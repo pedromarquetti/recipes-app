@@ -1,12 +1,9 @@
-use db::structs::{FullRecipe, Recipe};
-use log::{debug, error, info};
+use db::structs::FullRecipe;
+use log::error;
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
-    components::{
-        ingredient_list_component::IngredientList, recipe_component::RecipeComponent,
-        steps_component::StepsList,
-    },
+    components::recipe_component::RecipeComponent,
     functions::recipe_functions::{fetch_recipe, ApiResponse},
 };
 
@@ -22,16 +19,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
 
     // same as:
     // const [recipe,setRecipe] = useState(recipe)
-    let recipe_state = use_state(|| FullRecipe {
-        recipe: Recipe {
-            id: None,
-            user_id: None,
-            recipe_name: "".into(),
-            recipe_ingredients: vec![],
-            recipe_observations: None,
-        },
-        steps: vec![],
-    });
+    let recipe_state = use_state(|| FullRecipe::new());
 
     {
         let recipe_state = recipe_state.clone();

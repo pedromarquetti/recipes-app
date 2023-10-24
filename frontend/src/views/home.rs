@@ -1,4 +1,3 @@
-use log::{debug, info};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;

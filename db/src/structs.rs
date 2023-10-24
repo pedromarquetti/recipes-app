@@ -59,11 +59,27 @@ pub struct Recipe {
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 #[cfg_attr(not(target_arch = "wasm32"), derive(Queryable))]
-/// used to represent a recipe with its steps
+/// used to represent a recipe with its steps and ingredients
 pub struct FullRecipe {
     pub recipe: Recipe,
     pub ingredients: Vec<Ingredient>,
     pub steps: Vec<Step>,
+}
+
+impl FullRecipe {
+    /// Empty Full Recipe, meant to be used as a placeholder
+    pub fn new() -> Self {
+        FullRecipe {
+            recipe: Recipe {
+                id: None,
+                user_id: None,
+                recipe_name: "".into(),
+                recipe_observations: None,
+            },
+            steps: vec![],
+            ingredients: vec![],
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

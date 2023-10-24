@@ -1,5 +1,4 @@
 use db::structs::Step;
-use log::debug;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]

@@ -1,9 +1,8 @@
 use db::structs::{FullRecipe, Recipe};
 use gloo_net::{http::Request, Error as GlooError};
-use log::{debug, error};
+use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use yew::Html;
 
 #[derive(Debug)]
 pub enum ApiResponse {
@@ -76,7 +75,6 @@ pub async fn fuzzy_list_recipe(name: String) -> Result<Vec<Recipe>, GlooError> {
         .json::<Recipe>(&Recipe {
             id: None,
             recipe_name: name,
-            recipe_ingredients: vec![],
             user_id: None,
             recipe_observations: None,
         })?

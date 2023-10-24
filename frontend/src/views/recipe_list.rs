@@ -1,11 +1,8 @@
-use db::structs::{FullRecipe, Recipe};
-use log::{debug, error, info};
+use log::error;
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
-    components::recipe_card_component::RecipeCard,
-    functions::recipe_functions::fuzzy_list_recipe,
-    views::error::{ErrorPage, ErrorType},
+    components::recipe_card_component::RecipeCard, functions::recipe_functions::fuzzy_list_recipe,
 };
 
 #[derive(Properties, PartialEq)]
@@ -26,7 +23,7 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
                     match fuzzy_list_recipe(name).await {
                         Ok(ok_recipes) => recipe_state.set(ok_recipes),
                         Err(err) => {
-                            error!("err");
+                            error!("err {}", err.to_string());
                         }
                     }
                 });

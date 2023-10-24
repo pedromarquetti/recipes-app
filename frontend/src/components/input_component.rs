@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use log::debug;
 use yew::prelude::*;
 
 #[derive(Clone, Properties, PartialEq)]

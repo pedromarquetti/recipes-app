@@ -1,4 +1,4 @@
-use db::structs::{FullRecipe, Recipe};
+use db::structs::FullRecipe;
 use yew::prelude::*;
 
 use crate::components::recipe_title::RecipeTitle;
@@ -14,7 +14,9 @@ pub fn recipe_component(RecipeProps { recipe }: &RecipeProps) -> Html {
     html! {
     <div class="recipe">
         <RecipeTitle recipe={recipe.recipe.clone()}/>
-        <IngredientList ingredients={recipe.recipe.recipe_ingredients.clone()}/>
+        <IngredientList ingredients={
+            recipe.ingredients.clone()
+            }/>
         <StepsList steps={recipe.steps.clone()}/>
 
 

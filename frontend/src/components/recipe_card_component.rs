@@ -1,4 +1,3 @@
-use super::ingredient_list_component::IngredientList;
 use crate::{components::recipe_title::RecipeTitle, views::Route};
 use db::structs::Recipe;
 use yew::prelude::*;
@@ -15,7 +14,6 @@ pub fn recipe_card(RecipeProps { recipe }: &RecipeProps) -> Html {
     <div class="recipe recipe-card">
         <RecipeTitle recipe={recipe.clone()}/>
 
-        <IngredientList ingredients={recipe.recipe_ingredients.clone()} />
         <div class="card-interaction">
             <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id.unwrap() }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>
         </div>

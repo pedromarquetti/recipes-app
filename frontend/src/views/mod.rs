@@ -6,7 +6,7 @@ pub mod recipe_editor;
 pub mod recipe_list;
 pub mod register;
 
-use db::structs::{FullRecipe, Recipe};
+use db::structs::FullRecipe;
 use recipe::RecipePage;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -80,20 +80,10 @@ pub fn switch(route: Route) -> Html {
             }
         }
         Route::RecipeModifierPath => {
-            let r: FullRecipe = FullRecipe {
-                recipe: Recipe {
-                    id: None,
-                    user_id: None,
-                    recipe_name: "()".into(),
-                    recipe_ingredients: vec![],
-                    recipe_observations: None,
-                },
-                steps: vec![],
-            };
             html! {
                 <RecipeModifier
                     view_mode={ViewMode::Add}
-                    recipe={r}
+                    recipe={FullRecipe::new()}
                 />
             }
         }
