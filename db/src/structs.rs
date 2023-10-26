@@ -23,6 +23,17 @@ pub struct Step {
     pub step_instruction: String,
     pub step_duration_min: i32,
 }
+impl Step {
+    pub fn new() -> Self {
+        Step {
+            id: None,
+            recipe_id: 0,
+            step_name: String::new(),
+            step_instruction: String::new(),
+            step_duration_min: 0,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
@@ -41,6 +52,18 @@ pub struct Ingredient {
     pub ingredient_quantity: i32,
     pub quantity_unit: String,
 }
+impl Ingredient {
+    /// Empty Full Recipe, meant to be used as a placeholder
+    pub fn new() -> Self {
+        Ingredient {
+            id: None,
+            recipe_id: 0,
+            ingredient_name: String::new(),
+            ingredient_quantity: 0,
+            quantity_unit: String::new(),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 // configuring attributes
@@ -56,6 +79,16 @@ pub struct Recipe {
     pub recipe_name: String,
     pub recipe_observations: Option<Vec<String>>,
 }
+impl Recipe {
+    pub fn new() -> Self {
+        Recipe {
+            id: None,
+            user_id: None,
+            recipe_name: String::new(),
+            recipe_observations: None,
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 #[cfg_attr(not(target_arch = "wasm32"), derive(Queryable))]
@@ -70,14 +103,9 @@ impl FullRecipe {
     /// Empty Full Recipe, meant to be used as a placeholder
     pub fn new() -> Self {
         FullRecipe {
-            recipe: Recipe {
-                id: None,
-                user_id: None,
-                recipe_name: "".into(),
-                recipe_observations: None,
-            },
-            steps: vec![],
-            ingredients: vec![],
+            recipe: Recipe::new(),
+            steps: vec![Step::new()],
+            ingredients: vec![Ingredient::new()],
         }
     }
 }
@@ -94,6 +122,13 @@ pub struct User {
     pub user_pwd: String,
 }
 impl User {
+    pub fn new() -> Self {
+        User {
+            id: None,
+            user_name: "".into(),
+            user_pwd: "".into(),
+        }
+    }
     pub fn validate(&self, pwd: &str) -> Result<String, Error> {
         return Ok(pwd.into());
     }
