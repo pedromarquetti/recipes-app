@@ -1,17 +1,14 @@
 pub mod error;
 pub mod home;
 pub mod login;
+pub mod new_recipe;
 pub mod recipe;
-pub mod recipe_editor;
 pub mod recipe_list;
 pub mod register;
 
-use db::structs::FullRecipe;
 use recipe::RecipePage;
 use yew::prelude::*;
 use yew_router::prelude::*;
-
-use crate::views::recipe_editor::{RecipeModifier, ViewMode};
 
 use self::{
     error::{ErrorPage, ErrorType},
@@ -20,6 +17,7 @@ use self::{
     recipe_list::RecipeList,
     register::UserRegister,
 };
+use crate::views::new_recipe::NewRecipe;
 
 /// # Routes enum
 ///
@@ -36,8 +34,9 @@ pub enum Route {
     Recipe { id: i32 },
     #[at("/recipe/list/:name")]
     RecipeList { name: String },
-    #[at("/recipe/modify")]
-    RecipeModifierPath,
+    #[at("/recipe/add")]
+    NewRecipe,
+
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -79,12 +78,9 @@ pub fn switch(route: Route) -> Html {
                 <UserRegister/>
             }
         }
-        Route::RecipeModifierPath => {
+        Route::NewRecipe => {
             html! {
-                <RecipeModifier
-                    view_mode={ViewMode::Add}
-                    recipe={FullRecipe::new()}
-                />
+                <NewRecipe/>
             }
         }
     }
