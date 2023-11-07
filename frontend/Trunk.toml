@@ -23,7 +23,7 @@ ignore = []
 # The address to serve on.
 address = "0.0.0.0"
 # The port to serve on. 
-port = 8000
+port = 8000 
 # Open a browser tab once the initial build is complete.
 open = false
 # Disable auto-reload of the web app.
@@ -34,3 +34,9 @@ no_autoreload = false
 dist = "dist"
 # Optionally perform a cargo clean.
 cargo = true
+
+[[proxy]]
+# every time we try to send a request to an /api/ endpoint
+# redirect to this url...
+# does this mean both servers have to be in the same computer? Probably, but that's a problem for future me lol
+backend = "http://localhost:3000/api/"

@@ -7,7 +7,15 @@ This is still a work in progress, since i'm learning Rust/Yew/Warp/Diesel as I c
 In the future I'll implement a Docker setup for easier deployment, for now, run
 
 1. Frontend:
+
    - `trunk serve`
+
+     - Note:
+
+       The frontend will proxy API requests to the `proxy backend` defined in Trunk.toml, and will panic if the server is not available.
+
+       If you want to change the default proxy (defaults to localhost), pass do `trunk serve --proxy-backend <backend URL>`.
+
 1. Backend:
    - `cargo run`
    - Note: backend is expecting a DATABASE_URL env. var with a valid postgresql link
