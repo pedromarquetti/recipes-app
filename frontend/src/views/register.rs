@@ -12,12 +12,16 @@ pub fn user_register() -> Html {
             <Input
                 input_node_ref={node_ref.clone()}
                 input_placeholder={"user"}
+                is_required={true}
+
                 input_name={"user name"}
                 input_type={InputType::Text}/>
             <Input
                 input_node_ref={node_ref.clone()}
                 input_placeholder={"password"}
                 input_name={"user password"}
+                is_required={true}
+
                 input_type={InputType::Password}/>
             </form>
         </div>

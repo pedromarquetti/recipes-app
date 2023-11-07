@@ -8,12 +8,14 @@ pub struct InputProps {
     pub input_name: String,
     pub input_type: InputType,
     pub input_node_ref: NodeRef,
+    pub is_required: bool,
 }
 impl Display for InputType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             Self::Text => write!(f, "text"),
             Self::Password => write!(f, "password"),
+            Self::Number => write!(f, "number"),
         }
     }
 }
@@ -21,6 +23,7 @@ impl Display for InputType {
 pub enum InputType {
     Text,
     Password,
+    Number,
 }
 
 #[function_component(Input)]
@@ -40,6 +43,7 @@ pub fn input(props: &InputProps) -> Html {
         input_name,
         input_type,
         input_node_ref,
+        is_required,
     } = props;
     html! {
         <input
@@ -47,6 +51,7 @@ pub fn input(props: &InputProps) -> Html {
             name={input_name.clone()}
             placeholder={input_placeholder.clone()}
             ref={input_node_ref.clone()}
+            required={is_required.clone()}
 
         />
     }

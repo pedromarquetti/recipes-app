@@ -1,14 +1,7 @@
+use crate::components::input_component::{Input, InputType};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;
-
-use crate::{
-    components::{
-        go_home_component::GoHome,
-        input_component::{Input, InputType},
-    },
-    views::Route,
-};
 
 #[function_component(Home)]
 pub fn home() -> Html {
@@ -22,7 +15,8 @@ pub fn home() -> Html {
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             let search = input_node_ref.cast::<HtmlInputElement>().unwrap().value();
-            navigator.push(&Route::RecipeList { name: search })
+
+            // navigator.push(&Route::RecipeList { name: search })
         })
     };
 
@@ -34,6 +28,8 @@ pub fn home() -> Html {
                 <form {onsubmit}>
                     <Input
                     input_node_ref={recipe_search}
+                    is_required={true}
+
                     input_placeholder="type search string"
                     input_name="search"
                     input_type={InputType::Text}
