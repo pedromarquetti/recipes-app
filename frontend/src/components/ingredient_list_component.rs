@@ -7,15 +7,11 @@ pub struct IngredientsListProps {
 }
 #[function_component(IngredientList)]
 pub fn ingredients_list(IngredientsListProps { ingredients }: &IngredientsListProps) -> Html {
-    let l: Vec<Html> = ingredients
+    let ingredient_list: Vec<Html> = ingredients
         .iter()
         .map(|ingredient| {
             html! {
-                <li class="ingredient">
-                    <div class="ingredient-name">{ingredient.ingredient_name.clone()}</div>
-                    <div class="description">{format!("{} - {}",
-                    ingredient.ingredient_quantity,ingredient.quantity_unit)}</div>
-                </li>
+                <IngredientItem ingredient={ingredient.clone()} />
             }
         })
         .collect();
@@ -23,8 +19,25 @@ pub fn ingredients_list(IngredientsListProps { ingredients }: &IngredientsListPr
         <>
         <h2 class="ingredients">{"Ingredients"}</h2>
         <ul class="list">
-            {l}
+            {ingredient_list}
         </ul>
         </>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct IngredientItemProp {
+    pub ingredient: Ingredient,
+}
+
+#[function_component(IngredientItem)]
+/// Component used to represent a Ingredient item
+pub fn ingredient(ingredient: &IngredientItemProp) -> Html {
+    html! {
+        <li class="ingredient">
+            {ingredient.ingredient.ingredient_name.clone()}
+            {format!(" {} {}",
+            ingredient.ingredient.ingredient_quantity,ingredient.ingredient.quantity_unit)}
+        </li>
     }
 }
