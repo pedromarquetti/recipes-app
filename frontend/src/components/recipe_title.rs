@@ -1,9 +1,9 @@
-use db::structs::Recipe;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct TitleProps {
-    pub recipe: Recipe,
+    pub title: String,
+    pub owner: Option<i32>,
 }
 
 #[function_component(RecipeTitle)]
@@ -12,17 +12,18 @@ pub struct TitleProps {
 /// # TODO
 ///
 /// 1. implement a user id to user name converter
-pub fn recipe_title(TitleProps { recipe }: &TitleProps) -> Html {
+pub fn recipe_title(TitleProps { title, owner }: &TitleProps) -> Html {
     html! {
             <div class="recipe-title">
-            <h1>{recipe.recipe_name.clone()}</h1>
-            <h4>{
-                if let Some(user) = recipe.user_id.clone(){
+            <h1>{title}</h1>
+            <h6>{
+                if let Some(user) = owner{
                     format!("by user {}",user)
                 } else {
                     format!("by an anon. user")
                 }
-            }</h4>
+            }</h6>
+
         </div>
     }
 }

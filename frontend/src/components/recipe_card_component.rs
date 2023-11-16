@@ -12,7 +12,9 @@ pub struct RecipeProps {
 pub fn recipe_card(RecipeProps { recipe }: &RecipeProps) -> Html {
     html! {
     <div class="recipe recipe-card">
-        <RecipeTitle recipe={recipe.clone()}/>
+        <RecipeTitle
+            title={recipe.recipe_name.clone()}
+            owner={recipe.user_id} />
 
         <div class="card-interaction">
             <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id.unwrap() }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>

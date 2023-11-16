@@ -1,5 +1,5 @@
 use db::structs::FullRecipe;
-use log::error;
+use log::{error, info};
 use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
@@ -13,6 +13,8 @@ pub struct RecipeProps {
 }
 
 #[function_component(RecipePage)]
+/// # Recipe page
+///
 /// Handles Displaying single recipe when user accesses {url}/recipe/{id}
 pub fn recipe_page(props: &RecipeProps) -> Html {
     let recipe_id = props.recipe_id;
@@ -20,33 +22,31 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     // same as:
     // const [recipe,setRecipe] = useState(recipe)
     let recipe_state = use_state(|| FullRecipe::new());
+    let fetch_result_state = use_state(|| String::new());
 
     {
         let recipe_state = recipe_state.clone();
-
-        use_effect_with_deps(
-            move |_| {
-                // let recipe_state = recipe_state.clone();
-                spawn_local(async move {
-                    match fetch_recipe(recipe_id).await {
-                        Ok(ok_fetch) => match ok_fetch {
-                            ApiResponse::OkRecipe(ok_recipe) => recipe_state.set(ok_recipe),
-                            ApiResponse::ErrorMessage(err) => {
-                                error!("{:?}", err)
-                            }
-                        },
-                        Err(err_fetching) => {
-                            error!("error fetching! {:#?}", err_fetching);
+        use_effect(move || {
+            // use_effect_with(fetch_result_state, move |_| {
+            let recipe_state = recipe_state.clone();
+            spawn_local(async move {
+                match fetch_recipe(recipe_id).await {
+                    Ok(ok_fetch) => match ok_fetch {
+                        ApiResponse::OkRecipe(ok_recipe) => {
+                            recipe_state.set(ok_recipe);
+                            info!("recipe fetch ok!");
                         }
-                    }
-                });
-                || ()
-            },
-            (),
-        );
+                        ApiResponse::ErrorMessage(err) => {
+                            error!("{:?}", err);
+                        }
+                    },
+                    Err(err_fetching) => {}
+                }
+            });
+        });
     }
 
     html! {
-        <RecipeComponent recipe={(*recipe_state).clone()}/>
+        <RecipeComponent full_recipe={(*recipe_state).clone()}/>
     }
 }

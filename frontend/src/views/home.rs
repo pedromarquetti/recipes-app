@@ -1,4 +1,7 @@
-use crate::components::input_component::{Input, InputType};
+use crate::{
+    components::input_component::{Input, InputType},
+    views::{recipe_list::RecipeList, Route},
+};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -16,7 +19,7 @@ pub fn home() -> Html {
             event.prevent_default();
             let search = input_node_ref.cast::<HtmlInputElement>().unwrap().value();
 
-            // navigator.push(&Route::RecipeList { name: search })
+            navigator.push(&Route::RecipeList { name: search })
         })
     };
 

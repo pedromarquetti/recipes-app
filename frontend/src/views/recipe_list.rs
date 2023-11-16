@@ -5,38 +5,45 @@ use crate::{
     components::recipe_card_component::RecipeCard, functions::recipe_functions::fuzzy_list_recipe,
 };
 
+// use time::Duration;
+// use yew_notifications::{
+//     use_notification, Notification, NotificationFactory, NotificationType, NotificationsPosition,
+// };
+
 #[derive(Properties, PartialEq)]
 pub struct RecipeListProps {
     pub recipe_name: String,
 }
 
-/// iterates through provided recipe list and displays them
+/// # Recipe list view
+///
+/// Iterates through provided recipe list and displays them.
+///
+/// Results from Home search bar
 #[function_component(RecipeList)]
 pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
     let name = recipe_name.clone();
     let recipe_state = use_state(|| vec![]);
+    let fetch_msg = use_state(|| String::new());
+
+    // let notifications_manager = use_notification::<Notification>();
+
     {
         let recipe_state = recipe_state.clone();
-        use_effect_with_deps(
-            move |_| {
-                spawn_local(async move {
-                    match fuzzy_list_recipe(name).await {
-                        Ok(ok_recipes) => recipe_state.set(ok_recipes),
-                        Err(err) => {
-                            error!("err {}", err.to_string());
-                        }
+        use_effect_with(recipe_state.clone(), move |_| {
+            spawn_local(async move {
+                match fuzzy_list_recipe(name).await {
+                    Ok(ok_recipes) => {
+                        recipe_state.set(ok_recipes);
                     }
-                });
-            },
-            (),
-        )
+                    Err(err) => {
+                        error!("err {}", err.to_string());
+                    }
+                }
+            });
+        })
     }
-    // the code below gets executed every time because the recipe_state is not fille
-    // if recipe_state.clone().len() == 0 {
-    //     return html! {
-    //     <ErrorPage text={"No Recipes Found"} error_type={ErrorType::NotFound}/>
-    //     };
-    // }
+
     let list: Html = recipe_state
         .iter()
         .map(|recipe| {
@@ -49,13 +56,25 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
             }
         })
         .collect();
-
     html! {
         <>
-            <h1>{format!("Found {} recipes",recipe_state.clone().len())}</h1>
-            <ul class="recipes-list">
-            {list}
-            </ul>
+            {
+                if recipe_state.len() ==0 {
+                    html! {
+                        <h1>{"No recipes found!"}</h1>
+                    }
+                }
+                else {
+                    html! {
+                    <>
+                        <h1>{format!("Found {} recipes",recipe_state.clone().len())}</h1>
+                        <ul class="recipes-list">
+                        {list}
+                        </ul>
+                    </>
+                    }
+                }
+            }
         </>
     }
 }
