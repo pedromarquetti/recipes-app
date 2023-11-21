@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yew = { version = "0.20.0", features = ["csr"] }
-yew-router = "0.17.0"
-gloo-net = {version = "0.2",features = ["http","json"]}
+yew = { version = "0.21.0", features = ["csr"] }
+yew-router = "0.18.0"
+gloo-net = {version = "0.4.0",features = ["http","json"]}
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 wasm-logger = "0.2.0"
@@ -17,3 +17,6 @@ log = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
 db = { version = "0.1.0",path = "../db"}
 web-sys = {version = "0.3.64",features = ["HtmlInputElement"]}
+
+yew-notifications = { git = "https://github.com/TheBestTvarynka/yew-notifications.git", features = ["standard-notification"] }
+time = { version = "0.3.20", features = ["local-offset", "wasm-bindgen"] }
