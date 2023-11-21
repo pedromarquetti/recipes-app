@@ -7,6 +7,12 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+/// This struct represents possible Ok Values the API can generate
+pub struct ApiOkResponse {
+    pub msg: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
     derive(Queryable,
     Selectable,AsChangeset,
@@ -87,6 +93,16 @@ impl Recipe {
             recipe_name: String::new(),
             recipe_observations: None,
         }
+    }
+    pub fn set_name<S>(&mut self, name: S)
+    where
+        S: Into<String>,
+    {
+        self.recipe_name = name.into();
+    }
+
+    pub fn set_observation(&mut self, obs: Option<Vec<String>>) {
+        self.recipe_observations = obs
     }
 }
 
