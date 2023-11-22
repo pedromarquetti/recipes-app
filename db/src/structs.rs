@@ -94,6 +94,8 @@ impl Recipe {
             recipe_observations: None,
         }
     }
+
+    /// Change recipe name
     pub fn set_name<S>(&mut self, name: S)
     where
         S: Into<String>,
@@ -123,6 +125,18 @@ impl FullRecipe {
             steps: vec![Step::new()],
             ingredients: vec![Ingredient::new()],
         }
+    }
+    /// modify Recipe inside FullRecipe
+    pub fn set_recipe(&mut self, recipe: Recipe) {
+        self.recipe = recipe
+    }
+    /// modify Ingredients inside FullRecipe
+    pub fn set_ingredients(&mut self, ingredient: Vec<Ingredient>) {
+        self.ingredients = ingredient
+    }
+    /// modify Steps inside FullRecipe
+    pub fn set_steps(&mut self, steps: Vec<Step>) {
+        self.steps = steps
     }
 }
 
