@@ -1,6 +1,6 @@
 use crate::{
     components::input_component::{Input, InputType},
-    views::{recipe_list::RecipeList, Route},
+    views::Route,
 };
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
