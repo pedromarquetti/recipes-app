@@ -38,7 +38,7 @@ pub fn step_list(steps: &StepListProps) -> Html {
         .map(|step: &Step| {
             // note: calling unwrap on step.id because step will always receive an id
             html! {
-                <li id={format!("step-{}",step.id.unwrap())} class="step">
+                <li id={format!("step-{}",step.id.unwrap_or(steps.step_list.len().try_into().expect("invalid len()")))} class="step">
                     <StepItem step={step.clone()}/>
                 </li>
             }
@@ -68,7 +68,7 @@ pub fn ingredients_list(IngredientsListProps { ingredients }: &IngredientsListPr
         .iter()
         .map(|ingredient| {
             html! {
-                <li id={format!{"ingredient-{}",ingredient.id.unwrap()}}>
+                <li id={format!{"ingredient-{}",ingredient.id.unwrap_or(ingredients.len().try_into().expect("invelid len()"))}}>
                     <IngredientItem ingredient={ingredient.clone()} />
                 </li>
             }

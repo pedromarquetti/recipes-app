@@ -10,7 +10,7 @@ pub struct StepProps {
 pub fn step_component(StepProps { step }: &StepProps) -> Html {
     html! {
     <div class="step">
-        <h2>{step.step_name.clone()}</h2>
+        <h4>{step.step_name.clone()}</h4>
         <p>{format!("{}min - {}",step.step_duration_min,step.step_instruction)}</p>
 
 
