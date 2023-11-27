@@ -48,7 +48,7 @@ pub async fn create_recipe(recipe: Recipe) -> Result<ApiResponse<Recipe, String>
 }
 
 pub async fn delete_recipe(recipe: Recipe) -> Result<ApiResponse<FullRecipe, String>, GlooError> {
-    let req = Request::post("/api/create/recipe")
+    let req = Request::post("/api/delete/recipe")
         .json(&recipe)?
         .send()
         .await?;

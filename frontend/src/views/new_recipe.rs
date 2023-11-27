@@ -1,67 +1,220 @@
-use db::structs::{FullRecipe, Ingredient, Recipe};
-use log::debug;
-use web_sys::{HtmlElement, HtmlInputElement};
+use db::structs::{FullRecipe, Ingredient, Step};
+use log::{debug, error, info};
+use web_sys::HtmlInputElement;
 
-use yew::{prelude::*, virtual_dom::VNode};
+use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
-use crate::{
-    components::input_component::{Input, InputType},
-    views::Route,
+use crate::functions::recipe_functions::delete_recipe;
+use crate::functions::{recipe_functions::create_recipe, ApiResponse};
+
+use crate::views::Route;
+
+use crate::components::{
+    input_component::{Input, InputType},
+    recipe_component::{IngredientList, RecipeComponent, StepList},
 };
 
+// use time::Duration;
+// use yew_notifications::{
+//     use_notification, Notification, NotificationFactory, NotificationType, NotificationsPosition,
+// };
+
 #[function_component(NewRecipe)]
+/// Handles recipe creation
 pub fn new_recipe() -> Html {
     let recipe_state = use_state(|| FullRecipe::new());
 
     let recipe_name_ref = use_node_ref();
-    let recipe_obs_ref = use_node_ref();
 
-    // on submit handler
+    // <Ingredient> Callback handler
+    let ingredient_callback: Callback<Vec<Ingredient>> = {
+        // making a copy of the current recipe_state
+        let recipe_state = recipe_state.clone();
+        Callback::from(move |received_ingredients| {
+            let recipe_state = recipe_state.clone();
+            // local full_recipe (w/o UseStateHandle)
+            let mut full_recipe = (*recipe_state).clone();
+
+            // setting ingredients for the local recipe
+            full_recipe.set_ingredients(received_ingredients);
+
+            // updating local recipe_state with the local ingredients
+            recipe_state.set(full_recipe);
+        })
+    };
+
+    // <Step> Callback handler
+    let step_callback: Callback<Vec<Step>> = {
+        let recipe_state = recipe_state.clone();
+        Callback::from(move |received_steps| {
+            let recipe_state = recipe_state.clone();
+
+            // local full_recipe (w/o UseStateHandle)
+            let mut full_recipe = (*recipe_state).clone();
+
+            // setting ingredients for the local recipe
+            full_recipe.set_steps(received_steps);
+
+            // updating local recipe_state with the local ingredients
+            recipe_state.set(full_recipe);
+        })
+    };
+
+    // on submit CallBack handler
+    // this handles creating a new Recipe
     let onsubmit = {
+        // cloning here so these variables can be used inside this block*
         let recipe_name = recipe_name_ref.clone();
-        let recipe_observations = recipe_obs_ref.clone();
+
+        // let notifications_manager = use_notification::<Notification>();
+        let recipe_state = recipe_state.clone();
 
         Callback::from(move |e: SubmitEvent| {
+            let recipe_state = recipe_state.clone();
+
+            // *necessary because of this 'move'
             e.prevent_default();
-            let name = recipe_name.cast::<HtmlInputElement>().unwrap().value();
-            let obs = recipe_observations
+
+            // recipe name provided by user input
+            let name = recipe_name
                 .cast::<HtmlInputElement>()
-                .unwrap()
-                .value();
-            debug!("name {:?} obs {:?}", name, obs);
+                .expect("Invalid element!");
+
+            // creating a FullRecipe
+            let full_recipe = FullRecipe::new();
+            let mut full_recipe = full_recipe.clone();
+
+            // getting the Recipe from full_recipe
+            let mut recipe = full_recipe.recipe.clone();
+
+            recipe.set_name(name.value());
+
+            // making request to API backend
+            spawn_local(async move {
+                match create_recipe(recipe).await {
+                    Ok(api_response) => match api_response {
+                        ApiResponse::OkRecipe(ok_recipe) => {
+                            info!("recipe created! {:?}", ok_recipe);
+                            full_recipe.set_recipe(ok_recipe);
+                            recipe_state.set(full_recipe)
+                        }
+                        ApiResponse::ApiError(msg) => {
+                            error!("error: {}", msg)
+                        }
+                        ApiResponse::ApiMessage(msg) => {
+                            info!("{:?}", msg)
+                        }
+                    },
+                    Err(err) => {
+                        error!("{:?}", err);
+                    }
+                }
+            });
+
+            // notifications_manager.spawn(Notification::new(
+            //     NotificationType::Info,
+            //     "New recipe",
+            //     format!("name: {} obs ' {} '", name, obs),
+            //     Duration::seconds(2),
+            // ))
+            name.set_value("")
         })
     };
 
     html! {
     <>
         <h1>{"New Recipe"}</h1>
-        <form {onsubmit} class="new-recipe">
-            <Input
-                input_node_ref={recipe_name_ref.clone()}
-                input_placeholder="Recipe name"
-                input_name="recipe name"
-                input_type={InputType::Text}/>
-            <Input
-                input_node_ref={recipe_obs_ref.clone()}
-                input_placeholder="Observations"
-                input_name="observations"
-                input_type={InputType::Text}/>
-            <button >{"Create recipe"}</button>
-        </form>
-        <p>{"todo> make user create recipe first, then add ingredients/steps, because Step and Ingredient structs require recipe_id"}</p>
-        <IngredientList/>
+        {
+            if !recipe_state.recipe.id.is_none() {
+                html! {
+                    <>
+                        <RecipeComponent full_recipe={(*recipe_state).clone()}/>
+                    </>
+
+                }
+            } else {html!()}
+
+        }
+
+        {
+        // only show new recipe form if recipe_state is_none()
+            if recipe_state.recipe.id.is_none() {
+            html! {
+            <form {onsubmit} class="new-recipe">
+                <Input
+                    input_node_ref={recipe_name_ref.clone()}
+                    input_placeholder="Recipe name"
+                    input_name="recipe name"
+                    is_required={true}
+                    input_type={InputType::Text}/>
+                <button >{"Create recipe"}</button>
+            </form>
+            }
+            } else {html! {}}
+        }
+
+        {
+            // only show <IngredientList> if there's a valid recipe at recipe_state
+            if let Some(id) = recipe_state.recipe.id{
+            // TODO! add Observation component
+
+            html! {
+                <>
+                <NewIngredients callback={ingredient_callback} recipe_id={id}/>
+                <NewSteps callback={step_callback} recipe_id={id}/>
+
+                <h6>
+                        {format!("Note: when done, just click Home or go to")}
+                        <Link<Route> to={Route::Recipe {id:recipe_state.recipe.id.unwrap_or(1)}}>{
+                            format!("recipe {}",recipe_state.recipe.recipe_name)}
+                            </Link<Route>>
+                        <button onclick={Callback::from(move |_|{
+                            let recipe_state = recipe_state.clone();
+                            spawn_local(async move {
+                                match delete_recipe(recipe_state.recipe.clone()).await {
+                                    Ok(msg)=>{
+                                        info!("{:?}",msg);
+                                        recipe_state.set(FullRecipe::new())
+                                    },
+                                    Err(err)=>error!("{:?}",err)
+
+                                };
+                            });
+
+                        })}>{"cancel"}</button>
+
+                    </h6>
+                </>
+            }
+        } else {html!()}
+        }
+
     </>
     }
 }
 
-#[function_component(IngredientList)]
-pub fn ingredient_list() -> Html {
+#[derive(Properties, PartialEq)]
+/// # TODO
+///
+/// put this elsewhere to be used globally...
+pub struct RecipePartProps<T: std::cmp::PartialEq> {
+    pub recipe_id: i32,
+    pub callback: Callback<T>,
+}
+#[function_component(NewIngredients)]
+/// Ingredient list used for new recipes
+///
+/// Handles form inputs+changes
+pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
     let ingredient_list_state: UseStateHandle<Vec<Ingredient>> = use_state(|| vec![]);
+    let recipe_id = props.recipe_id;
+
     let name_input = use_node_ref();
     let ingredient_quantity_input = use_node_ref();
     let quantity_unit_input = use_node_ref();
 
+    // handling form submit (adding new ingredient to list)
     let onsubmit = {
         // cloning node ref
         let name_input = name_input.clone();
@@ -70,12 +223,16 @@ pub fn ingredient_list() -> Html {
 
         // cloning use_state
         let ingredient_list_state = ingredient_list_state.clone();
+
+        let callback = props.callback.clone();
+
         Callback::from(move |event: SubmitEvent| {
+            let ingredient_list_state = ingredient_list_state.clone();
             // they have to be cloned because of the 'move' inside the closure
 
             // "cloned" represents the "ingredient_list_state" vec![]
             // it'll be used to push new values
-            let mut cloned = ingredient_list_state.to_vec();
+            let mut cloned_ingredient_list = (*ingredient_list_state).clone();
 
             // getting form input values...
             let name = name_input.cast::<HtmlInputElement>().unwrap();
@@ -83,51 +240,151 @@ pub fn ingredient_list() -> Html {
             let unit = unit_input.cast::<HtmlInputElement>().unwrap();
 
             event.prevent_default();
-
-            // appending values to cloned vec![]
-            cloned.push(Ingredient {
+            let ingredient = Ingredient {
                 id: None,
-                recipe_id: 1,
+                recipe_id,
                 ingredient_name: name.value(),
                 ingredient_quantity: quantity.value().parse::<i32>().unwrap(),
                 quantity_unit: unit.value(),
-            });
-            // setting cloned local vec as the current list_state
-            ingredient_list_state.set(cloned);
+            };
+
+            // appending values to cloned vec![]
+            cloned_ingredient_list.push(ingredient);
+
+            // sending ingredient list to parent component
+            callback.emit(cloned_ingredient_list.clone());
+
+            // setting ingredient list state
+            ingredient_list_state.set(cloned_ingredient_list.clone());
         })
     };
-    let i: Html = ingredient_list_state
-        .iter()
-        .map(|ingredient: &Ingredient| {
-            html! {
-            <li>{ingredient.ingredient_name.clone()}</li>
-            }
-        })
-        .collect::<VNode>();
 
     html! {
     <div class="new-ingredients">
+        <h1>{"New ingredient"}</h1>
         <form {onsubmit}>
             <Input
                 input_node_ref={name_input.clone()}
+                is_required={true}
+
                 input_placeholder="Ingredient name"
                 input_name="ingredient name"
                 input_type={InputType::Text}/>
             <Input
             input_node_ref={ingredient_quantity_input.clone()}
             input_placeholder="Ingredient quantity"
+                is_required={true}
+
             input_name="ingredient quantity"
-            input_type={InputType::Text}/>
+            input_type={InputType::Number}/>
             <Input
                 input_node_ref={quantity_unit_input.clone()}
                 input_placeholder="Ingredient unit (kg,g,L)"
                 input_name="ingredient unit"
+                is_required={true}
+
                 input_type={InputType::Text}/>
+                <button>{"New ingredient"}</button>
 
         </form>
-        <ul>
-        {i}
-        </ul>
+        {
+            if ingredient_list_state.len() ==0 {
+                html! {
+                <h6>{"ingredient list will appear here"}</h6>
+                }
+            }else {
+                html! {
+                <IngredientList ingredients={(*ingredient_list_state).clone()}/>
+                }
+            }
+        }
+    </div>
+    }
+}
+
+#[function_component(NewSteps)]
+pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
+    let step_list_state: UseStateHandle<Vec<Step>> = use_state(|| vec![]);
+    let callback = props.callback.clone();
+    let recipe_id = props.recipe_id;
+
+    let step_name = use_node_ref();
+    let step_instruction = use_node_ref();
+    let step_duration_min = use_node_ref();
+
+    // handling form submit (adding new step to list)
+    let onsubmit = {
+        // cloning node ref
+        let name_input = step_name.clone();
+        let step_instruction = step_instruction.clone();
+        let step_duration_min = step_duration_min.clone();
+
+        // cloning use_state
+        let step_list_state = step_list_state.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            // they have to be cloned because of the 'move' inside the closure
+
+            // "cloned" represents the "step_list_state" vec![]
+            // it'll be used to push new values
+            let mut cloned_step_list = step_list_state.to_vec();
+
+            // getting form input values...
+            let name = name_input.cast::<HtmlInputElement>().unwrap();
+            let step_instruction = step_instruction.cast::<HtmlInputElement>().unwrap();
+            let step_duration_min = step_duration_min.cast::<HtmlInputElement>().unwrap();
+
+            event.prevent_default();
+
+            // appending values to cloned vec![]
+            cloned_step_list.push(Step {
+                id: None,
+                recipe_id,
+                step_name: name.value(),
+                step_instruction: step_instruction.value(),
+                step_duration_min: step_duration_min.value().parse::<i32>().unwrap(),
+            });
+            // setting cloned local vec as the current list_state
+            callback.emit(cloned_step_list.clone());
+            step_list_state.set(cloned_step_list);
+        })
+    };
+
+    html! {
+    <div class="new-ingredients">
+        <h1>{"New Step"}</h1>
+        <form {onsubmit}>
+            <Input
+                input_node_ref={step_name.clone()}
+                is_required={true}
+
+                input_placeholder="step name"
+                input_name="step name"
+                input_type={InputType::Text}/>
+            <Input
+            input_node_ref={step_instruction.clone()}
+            input_placeholder="Step instruction"
+            is_required={true}
+            input_name="Step instruction"
+            input_type={InputType::Text}/>
+            <Input
+                input_node_ref={step_duration_min.clone()}
+                input_placeholder="Step duration (mins)"
+                input_name="duration"
+                is_required={true}
+                input_type={InputType::Number}/>
+                <button>{"New ingredient"}</button>
+
+        </form>
+        {if step_list_state.len() == 0 {
+            html! {
+            <h6>{"List of steps to be added will appear here"}</h6>
+            }
+        }else {
+            html! {
+            <StepList step_list={(*step_list_state).clone()}/>
+            }
+        }}
     </div>
     }
 }
