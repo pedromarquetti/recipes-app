@@ -8,25 +8,25 @@ use crate::{
 use yew::{prelude::*, Renderer};
 use yew_router::prelude::*;
 
+//yew_notifications is not Yew0.21 compatible yet
+// use yew_notifications::{
+//     Notification, NotificationFactory, NotificationsPosition, NotificationsProvider,
+// };
+
 pub mod components;
 pub mod functions;
 pub mod views;
-
-pub fn get_ip() -> String {
-    env::var("API_IP").unwrap_or("http://127.0.0.1:3000".into())
-}
 
 /// Main App function
 #[function_component]
 fn App() -> Html {
     html! {
-
-        <BrowserRouter>
-            <NavBar />
-            <div class="container">
-            <Switch<Route>  render={switch} />
-            </div>
-        </BrowserRouter>
+            <BrowserRouter>
+                <NavBar />
+                <div class="container">
+                <Switch<Route>  render={switch} />
+                </div>
+            </BrowserRouter>
     }
 }
 
