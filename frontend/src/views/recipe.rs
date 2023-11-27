@@ -22,12 +22,10 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     // same as:
     // const [recipe,setRecipe] = useState(recipe)
     let recipe_state = use_state(|| FullRecipe::new());
-    let fetch_result_state = use_state(|| String::new());
 
     {
         let recipe_state = recipe_state.clone();
-        use_effect(move || {
-            // use_effect_with(fetch_result_state, move |_| {
+        use_effect_with((), move |_| {
             let recipe_state = recipe_state.clone();
             spawn_local(async move {
                 match fetch_recipe(recipe_id).await {
@@ -51,7 +49,18 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
         });
     }
 
-    html! {
-        <RecipeComponent full_recipe={(*recipe_state).clone()}/>
+    if recipe_state.recipe.id.is_some() {
+        html! {
+            <>
+                <RecipeComponent full_recipe={(*recipe_state).clone()}/>
+            </>
+        }
+    } else {
+        html! {
+        <>
+        <h1>{"No recipe with this id!"}</h1>
+
+        </>
+        }
     }
 }
