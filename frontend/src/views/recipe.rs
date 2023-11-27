@@ -4,7 +4,7 @@ use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
     components::recipe_component::RecipeComponent,
-    functions::recipe_functions::{fetch_recipe, ApiResponse},
+    functions::{recipe_functions::fetch_recipe, ApiResponse},
 };
 
 #[derive(Properties, PartialEq)]
@@ -36,11 +36,16 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
                             recipe_state.set(ok_recipe);
                             info!("recipe fetch ok!");
                         }
-                        ApiResponse::ErrorMessage(err) => {
+                        ApiResponse::ApiError(err) => {
                             error!("{:?}", err);
                         }
+                        ApiResponse::ApiMessage(msg) => {
+                            info!("{:?}", msg);
+                        }
                     },
-                    Err(err_fetching) => {}
+                    Err(err_fetching) => {
+                        error!("{}", err_fetching)
+                    }
                 }
             });
         });

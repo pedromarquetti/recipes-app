@@ -163,3 +163,9 @@ impl User {
         return Ok(pwd.into());
     }
 }
+
+pub trait RecipeTrait {}
+impl RecipeTrait for FullRecipe {}
+impl RecipeTrait for Recipe {}
+impl RecipeTrait for Ingredient {}
+impl RecipeTrait for Step {}
