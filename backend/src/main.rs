@@ -13,6 +13,7 @@ use warp::{Filter, Rejection};
 use crate::error::convert_to_rejection;
 
 mod error;
+mod jwt;
 mod routes;
 
 const DEFAULT_DATABASE_URL: &'static str = "postgresql://postgres@localhost:5432";

@@ -59,6 +59,7 @@ enum ErrorKind {
     DatabaseError,
     PayloadError,
     InternalServerError,
+    UserAuthError,
 }
 #[derive(Debug)]
 /// Custom error types
@@ -74,6 +75,13 @@ impl Error {
         Self {
             kind: ErrorKind::NotFound,
             status_code: StatusCode::NOT_FOUND,
+            msg: msg.into(),
+        }
+    }
+    pub fn user_error<S: Into<String>>(msg: S, status_code: StatusCode) -> Self {
+        Self {
+            kind: ErrorKind::UserAuthError,
+            status_code: status_code,
             msg: msg.into(),
         }
     }
@@ -126,6 +134,7 @@ impl Error {
             ErrorKind::DatabaseError => Box::new(reply::json(&json!({ "error": msg }))),
             ErrorKind::PayloadError => Box::new(reply::json(&json!({ "error": msg }))),
             ErrorKind::InternalServerError => Box::new(reply::json(&json!({ "error": msg }))),
+            ErrorKind::UserAuthError => Box::new(reply::json(&json!({"error":msg}))),
         };
         reply::with_status(body, self.status_code)
     }

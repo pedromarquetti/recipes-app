@@ -1,3 +1,4 @@
+mod auth;
 mod ingredient_route;
 mod recipe_route;
 mod step_route;

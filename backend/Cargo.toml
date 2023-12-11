@@ -16,3 +16,4 @@ dotenvy = "0.15"
 log = "0.4.1"
 db = {version = "*",path = "../db"}
 bcrypt = {version="0.15"}
+jsonwebtoken = "9.2.0"
