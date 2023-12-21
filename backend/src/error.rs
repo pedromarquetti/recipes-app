@@ -2,6 +2,7 @@ use std::convert::Infallible;
 
 use bcrypt::BcryptError;
 use diesel::result::DatabaseErrorKind;
+use jsonwebtoken::errors::ErrorKind as JWTErrorKind;
 use log::error;
 use serde_json::json;
 
@@ -165,5 +166,11 @@ impl From<DieselError> for Error {
 impl From<BcryptError> for Error {
     fn from(value: BcryptError) -> Self {
         Error::internal_error(value.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for Error {
+    fn from(value: jsonwebtoken::errors::Error) -> Self {
+        Error::user_error(value.to_string(), StatusCode::BAD_REQUEST)
     }
 }

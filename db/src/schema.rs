@@ -31,9 +31,10 @@ diesel::table! {
 
 diesel::table! {
     recipe_users (id) {
-        id -> Int4,
+        id -> Nullable<Int4>,
         user_name -> Varchar,
         user_pwd -> Text,
+        user_role -> Text,
     }
 }
 

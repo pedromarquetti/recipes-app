@@ -12,7 +12,7 @@ use self::{
     ingredient_route::{create_ingredient, delete_ingredient, update_ingredient},
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
-    user_route::{create_user, delete_user, get_user_info},
+    user_route::{create_user, delete_user, get_user_name},
 };
 
 pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -124,7 +124,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(path!("api" / "get" / "username"))
         .and(pool_filter.clone())
         .and(warp::body::json())
-        .and_then(get_user_info);
+        .and_then(get_user_name);
 
     let user_endpoints = create_user.or(get_user_info).or(delete_user);
     let recipe_endpoints = create_recipe

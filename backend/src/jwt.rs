@@ -1,4 +1,4 @@
-use db::structs::User;
+use db::structs::{User, UserRole};
 use jsonwebtoken::{
     decode, encode,
     errors::{Error as JWTError, Result as JWTResult},
@@ -14,7 +14,7 @@ fn get_secret() -> String {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserClaims {
     pub user_name: String,
-    pub role: String,
+    pub role: UserRole,
     pub exp: usize,
 }
 
@@ -27,14 +27,14 @@ pub fn generate_token(user: User) -> Result<String, JWTError> {
     return encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(get_secret()),
+        &EncodingKey::from_secret(get_secret().as_ref()),
     );
 }
 
-pub fn validate_token(token: String) -> JWTResult<TokenData<T>> {
+pub fn validate_token<T: DeserializeOwned>(token: String) -> JWTResult<TokenData<T>> {
     return decode(
         &token,
-        &EncodingKey::from_secret(get_secret()),
+        &DecodingKey::from_secret(get_secret().as_ref()),
         &Validation::new(Algorithm::HS256),
     );
 }

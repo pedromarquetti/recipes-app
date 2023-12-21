@@ -1,8 +1,15 @@
-use std::io::Error;
-
+#[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
+use std::io::{Error, Write};
 
-use diesel::prelude::*;
+use diesel::{
+    deserialize::{FromSql, FromSqlRow},
+    expression::AsExpression,
+    pg::Pg,
+    prelude::*,
+    serialize::{IsNull, ToSql},
+    sql_types::Text,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -140,25 +147,70 @@ impl FullRecipe {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+// #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Serialize)]
+#[cfg_attr(not(target_arch = "wasm32"), 
+    derive(FromSqlRow, AsExpression),
+    diesel(sql_type = Text)
+)]
+pub enum UserRole {
+    Guest,
+    Admin,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl ToSql<Text, Pg> for UserRole {
+    fn to_sql<'b>(
+        &'b self,
+        out: &mut diesel::serialize::Output<'b, '_, Pg>,
+    ) -> diesel::serialize::Result {
+        match *self {
+            UserRole::Guest => out.write_all(b"guest")?,
+            UserRole::Admin => out.write_all(b"admin")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+#[cfg(not(target_arch = "wasm32"))]
+impl FromSql<Text, Pg> for UserRole {
+    fn from_sql(
+        bytes: <Pg as diesel::backend::Backend>::RawValue<'_>,
+    ) -> diesel::deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"guest" => Ok(UserRole::Guest),
+            b"admin" => Ok(UserRole::Admin),
+            _ => Err("Unknown Enum Variant".into()),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
-    derive( Queryable, Selectable, Insertable, Identifiable),
+    // derive( Queryable, Selectable, Insertable, Identifiable),
+    derive(AsChangeset,Queryable,Selectable,Insertable,Identifiable,),
     diesel(table_name = recipe_users)
 )]
-
 pub struct User {
     pub id: Option<i32>,
     pub user_name: String,
+    pub user_role: UserRole,
     pub user_pwd: String,
 }
+
 impl User {
     pub fn new() -> Self {
         User {
             id: None,
             user_name: "".into(),
             user_pwd: "".into(),
+            user_role: UserRole::Guest,
         }
     }
+    /// modify Steps inside FullRecipe
+    pub fn set_id(&mut self, user_id: i32) {
+        self.id = Some(user_id)
+    }
+    /// Password validation function
     pub fn validate(&self, pwd: &str) -> Result<String, Error> {
         return Ok(pwd.into());
     }
