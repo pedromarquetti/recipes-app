@@ -1,12 +1,16 @@
 use bcrypt::{hash, verify};
+use log::debug;
 use serde_json::json;
-use warp::{reject::Rejection, reply::Reply};
+use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
-use crate::error::{convert_to_rejection, Error};
+use crate::{
+    error::{convert_to_rejection, Error},
+    jwt::generate_token,
+};
 use db::{
     db_pool::{DbConnection, DieselError, PooledPgConnection},
     functions::user::{create_user_record, delete_user_record, query_user_info},
-    structs::User,
+    structs::{User, UserRole},
 };
 
 pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
@@ -53,34 +57,34 @@ pub async fn get_user_name(db_conn: DbConnection, user_id: i32) -> Result<impl R
     let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
     let mut id = User::new();
     id.set_id(user_id);
+
     // running query
-    let usr = query_user_info(conn, &id).map_err(convert_to_rejection)?;
+    let query = query_user_info(conn, &id).map_err(convert_to_rejection)?;
 
     Ok(warp::reply::json(&json!({
-        "msg": usr.user_name
+        "msg": query.user_name
     })))
 }
-pub async fn login_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
+pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
     let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
-    let pwd_query = query_user_info(conn, &user);
-    match pwd_query {
-        Ok(pwd) => {
-            if verify(&user.user_pwd, &pwd.user_pwd).map_err(convert_to_rejection)? {
-                Ok(warp::reply::json(&json!(
-                    {
-                        "msg":format!("user {} logged in!",user.user_name)
-                    }
-                )))
-            } else {
-                Ok(warp::reply::json(&json!(
-                    {
-                        "msg":""
-                    }
-                )))
+
+    let query = query_user_info(conn, &user).map_err(convert_to_rejection)?;
+
+    if verify(&user.user_pwd, &query.user_pwd).map_err(convert_to_rejection)? {
+        let token = generate_token(user).map_err(convert_to_rejection)?;
+        let cookie = format!(
+            // the below jwt works in dev server + HTTP (lack of Secure flag)
+            "jwt={}; Path=/; HttpOnly; Max-Age=1209600; SameSite=Strict;Secure",
+            token
+        );
+        let json_resp = warp::reply::json(&json!(
+            {
+                "msg":format!("login success!",)
             }
-        }
-        Err(DieselError::NotFound) => Err(Error::db_error("user not found").into()),
-        Err(err) => Err(Error::db_error(format!("An error occurred! {err}")).into()),
+        ));
+        Ok(warp::reply::with_header(json_resp, SET_COOKIE, cookie))
+    } else {
+        Err(Error::user_error("Incorred User or Password!", StatusCode::UNAUTHORIZED).into())
     }
 }
 

@@ -1,6 +1,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
-use std::io::{Error, Write};
+use std::{
+    fmt::{Debug, Display},
+    io::{Error, Read, Write},
+};
 
 use diesel::{
     deserialize::{FromSql, FromSqlRow},
@@ -148,11 +151,16 @@ impl FullRecipe {
 }
 
 // #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[derive(Deserialize, Debug, PartialEq, Eq, Serialize)]
+#[derive(Deserialize, Clone, Debug, Copy, PartialEq, Eq, Serialize)]
 #[cfg_attr(not(target_arch = "wasm32"), 
-    derive(FromSqlRow, AsExpression),
+    derive(
+        
+        FromSqlRow,
+        AsExpression
+    ),
     diesel(sql_type = Text)
 )]
+#[serde(rename_all = "lowercase")]
 pub enum UserRole {
     Guest,
     Admin,
@@ -164,30 +172,53 @@ impl ToSql<Text, Pg> for UserRole {
         &'b self,
         out: &mut diesel::serialize::Output<'b, '_, Pg>,
     ) -> diesel::serialize::Result {
-        match *self {
-            UserRole::Guest => out.write_all(b"guest")?,
-            UserRole::Admin => out.write_all(b"admin")?,
-        }
+        match self {
+            UserRole::Guest => {
+                // self.to_sql(out)
+                out.write(b"guest")?
+                
+            }
+            UserRole::Admin => {
+                out.write(b"admin")?
+                // self.to_sql(out)
+
+                
+            }
+        };
         Ok(IsNull::No)
     }
 }
 #[cfg(not(target_arch = "wasm32"))]
+
 impl FromSql<Text, Pg> for UserRole {
     fn from_sql(
         bytes: <Pg as diesel::backend::Backend>::RawValue<'_>,
     ) -> diesel::deserialize::Result<Self> {
-        match bytes.as_bytes() {
-            b"guest" => Ok(UserRole::Guest),
-            b"admin" => Ok(UserRole::Admin),
-            _ => Err("Unknown Enum Variant".into()),
+        let s = String::from_sql(bytes)?;
+        match s.as_str() {
+            "guest" => Ok(UserRole::Guest),
+            "admin" => Ok(UserRole::Admin),
+            x => Err(format!("unknown variant: {:?},", x).into()),
         }
+        // match bytes.as_bytes() {
+        //     b"guest" => Ok(UserRole::Guest),
+        //     b"admin" => Ok(UserRole::Admin),
+        //     x => Err(format!("unknown variant: {:?},", x).into()),
+        // }
     }
 }
+
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
     // derive( Queryable, Selectable, Insertable, Identifiable),
-    derive(AsChangeset,Queryable,Selectable,Insertable,Identifiable,),
+    derive(
+        AsChangeset,
+        Queryable,
+        Selectable,
+        Insertable,
+        Identifiable,
+    ),
     diesel(table_name = recipe_users)
 )]
 pub struct User {

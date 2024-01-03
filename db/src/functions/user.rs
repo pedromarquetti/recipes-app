@@ -22,8 +22,22 @@ pub fn delete_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(
 }
 
 pub fn query_user_info(mut conn: PooledPgConnection, user: &User) -> Result<User, DieselError> {
-    let user_name: User = user_dsl::recipe_users
+    let result: User = user_dsl::recipe_users
+        .select((
+            user_dsl::id,
+            user_dsl::user_name,
+            user_dsl::user_role,
+            user_dsl::user_pwd,
+        ))
         .filter(user_dsl::user_name.eq(&user.user_name))
-        .get_result::<User>(&mut conn)?;
-    Ok(user_name)
+        .first::<User>(&mut conn)?;
+    Ok(result)
+}
+
+pub fn update_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(), DieselError> {
+    diesel::update(user_dsl::recipe_users)
+        .filter(user_dsl::id.eq(user.id))
+        .set(user)
+        .execute(&mut conn)?;
+    Ok(())
 }
