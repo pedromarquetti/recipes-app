@@ -13,14 +13,14 @@ fn get_secret() -> String {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserClaims {
-    pub user_name: String,
+    pub user_id: i32,
     pub role: UserRole,
     pub exp: usize,
 }
 
 pub fn generate_token(user: User) -> Result<String, JWTError> {
     let claims = UserClaims {
-        user_name: user.user_name,
+        user_id: user.id.expect("Expected USER ID"),
         role: user.user_role,
         exp: 10000000000,
     };
