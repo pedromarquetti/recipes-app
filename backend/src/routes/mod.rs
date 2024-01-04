@@ -1,12 +1,8 @@
-mod auth;
-mod ingredient_route;
-mod recipe_route;
-mod step_route;
-mod user_route;
-
-use crate::routes::{recipe_route::create_recipe, step_route::create_step};
-use db::db_pool::Pool;
-use warp::{http::method::Method, path, Filter, Rejection, Reply};
+pub mod auth;
+pub mod ingredient_route;
+pub mod recipe_route;
+pub mod step_route;
+pub mod user_route;
 
 use self::{
     ingredient_route::{create_ingredient, delete_ingredient, update_ingredient},
@@ -14,6 +10,11 @@ use self::{
     step_route::{delete_step, update_step},
     user_route::{create_user, delete_user, get_user_name, login_user_route},
 };
+use crate::routes::auth::auth;
+use crate::routes::{recipe_route::create_recipe, step_route::create_step};
+use db::db_pool::Pool;
+use serde_json::json;
+use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
 pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     // this filter will be used to get a valid connection to the db pool
@@ -38,6 +39,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
     let create_recipe = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "recipe"))
+        .and(auth())
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(create_recipe);
@@ -62,6 +64,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
     let update_recipe = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "update" / "recipe"))
+        .and(auth())
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(update_recipe);
@@ -132,6 +135,8 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::body::json())
         .and_then(login_user_route);
 
+    let ping_endpoint = warp::any().and(path!("api" / "ping")).and_then(ping);
+
     let user_endpoints = create_user.or(get_user_info).or(delete_user).or(login_user);
     let recipe_endpoints = create_recipe
         .or(update_recipe)
@@ -145,9 +150,14 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .or(delete_recipe_ingredient)
         .or(update_recipe_ingredient);
 
-    user_endpoints
+    ping_endpoint
+        .or(user_endpoints)
         .or(recipe_endpoints)
         .or(recipe_step_endpoints)
         .or(recipe_ingredient_endpoints)
         .with(cors)
+}
+
+pub async fn ping() -> Result<impl Reply, Rejection> {
+    Ok(warp::reply::json(&json!({"msg":"I'm Here"})))
 }

@@ -9,7 +9,7 @@ pub async fn create_ingredient(
     ingredients: Vec<Ingredient>,
 ) -> Result<impl Reply, Rejection> {
     let conn = db_conn.map_err(convert_to_rejection)?;
-    create_recipe_ingredient_record(conn, &ingredients).map_err(convert_to_rejection)?;
+    create_recipe_ingredient_query(conn, &ingredients).map_err(convert_to_rejection)?;
     Ok(warp::reply::json(
         &json!({"msg":format!("created {} ingredients",ingredients.len())}),
     ))
@@ -40,7 +40,7 @@ pub async fn delete_ingredient(
         return Err(Error::payload_error("missing ingredient ID field").into());
     }
     let conn = db_conn.map_err(convert_to_rejection)?;
-    delete_recipe_ingredient_record(conn, &ingredients).map_err(convert_to_rejection)?;
+    delete_recipe_ingredient_query(conn, &ingredients).map_err(convert_to_rejection)?;
     Ok(warp::reply::json(
         &json!({"msg":format!("Ingredient {} deleted",ingredients.ingredient_name)}),
     ))

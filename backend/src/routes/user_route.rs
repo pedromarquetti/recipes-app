@@ -65,13 +65,14 @@ pub async fn get_user_name(db_conn: DbConnection, user_id: i32) -> Result<impl R
         "msg": query.user_name
     })))
 }
+
 pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
     let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
     let query = query_user_info(conn, &user).map_err(convert_to_rejection)?;
 
     if verify(&user.user_pwd, &query.user_pwd).map_err(convert_to_rejection)? {
-        let token = generate_token(user).map_err(convert_to_rejection)?;
+        let token = generate_token(query).map_err(convert_to_rejection)?;
         let cookie = format!(
             // the below jwt works in dev server + HTTP (lack of Secure flag)
             "jwt={}; Path=/; HttpOnly; Max-Age=1209600; SameSite=Strict;Secure",
