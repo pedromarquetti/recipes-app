@@ -20,6 +20,12 @@ In the future I'll implement a Docker setup for easier deployment, for now, run
    - `cargo run`
    - Note: backend is expecting a DATABASE_URL env. var with a valid postgresql link
 
+# TODO
+
+1. improve API Response errors (example:`{
+    "error": "duplicate key value violates unique constraint \"recipe_recipe_name_key\""
+}` should be `{"error":"key <KEY> already exists"}`)
+
 ## Useful links
 
 1. [Official Yew docs](https://yew.rs/docs/tutorial#fetching-data-using-external-rest-api)
