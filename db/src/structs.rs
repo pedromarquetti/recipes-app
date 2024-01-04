@@ -1,8 +1,8 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
 use std::{
-    fmt::{Debug, Display},
-    io::{Error, Read, Write},
+    fmt::Debug,
+    io::{Error,  Write},
 };
 
 use diesel::{

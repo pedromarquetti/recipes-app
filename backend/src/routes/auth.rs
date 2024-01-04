@@ -1,9 +1,8 @@
 use crate::jwt::{validate_token, UserClaims};
 use jsonwebtoken::TokenData;
-use warp::hyper::StatusCode;
 use warp::{Filter, Rejection};
 
-use crate::error::{convert_to_rejection, Error};
+use crate::error::convert_to_rejection;
 
 pub fn auth() -> impl Filter<Extract = (Option<UserClaims>,), Error = Rejection> + Clone + Copy {
     warp::cookie::optional::<String>("jwt")

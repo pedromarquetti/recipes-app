@@ -2,7 +2,6 @@ use std::convert::Infallible;
 
 use bcrypt::BcryptError;
 use diesel::result::DatabaseErrorKind;
-use jsonwebtoken::errors::ErrorKind as JWTErrorKind;
 use log::error;
 use serde_json::json;
 

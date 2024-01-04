@@ -1,5 +1,4 @@
 use bcrypt::{hash, verify};
-use log::debug;
 use serde_json::json;
 use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
@@ -8,9 +7,9 @@ use crate::{
     jwt::generate_token,
 };
 use db::{
-    db_pool::{DbConnection, DieselError, PooledPgConnection},
+    db_pool::{DbConnection, PooledPgConnection},
     functions::user::{create_user_record, delete_user_record, query_user_info},
-    structs::{User, UserRole},
+    structs::User,
 };
 
 pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
