@@ -35,7 +35,7 @@ pub fn delete_recipe_query(
 ///
 /// * `conn` -> A pooled Postgres connection
 /// * `incoming_recipe` -> Recipe struct (maybe i'll use i32 to represent the id)
-pub fn query_recipe(
+pub fn query_full_recipe(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
 ) -> Result<FullRecipe, DieselError> {
