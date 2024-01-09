@@ -36,19 +36,19 @@ pub fn delete_recipe_query(
 /// * `conn` -> A pooled Postgres connection
 /// * `incoming_recipe` -> Recipe struct (maybe i'll use i32 to represent the id)
 pub fn query_full_recipe(
-    mut conn: PooledPgConnection,
+    conn: &mut PooledPgConnection,
     incoming_recipe: &Recipe,
 ) -> Result<FullRecipe, DieselError> {
     let query_recipe: Recipe = recipe_dsl::recipe
         .filter(recipe_dsl::id.eq(&incoming_recipe.id.unwrap()))
-        .get_result(&mut conn)?;
+        .get_result(conn)?;
 
     let query_steps: Vec<Step> = step_dsl::recipe_step
         .filter(step_dsl::recipe_id.eq(&incoming_recipe.id.unwrap()))
-        .get_results::<Step>(&mut conn)?;
+        .get_results::<Step>(conn)?;
     let query_ingredients: Vec<Ingredient> = ingredient_dsl::recipe_ingredient
         .filter(ingredient_dsl::recipe_id.eq(incoming_recipe.id.unwrap()))
-        .get_results::<Ingredient>(&mut conn)?;
+        .get_results::<Ingredient>(conn)?;
 
     Ok(FullRecipe {
         recipe: query_recipe,
