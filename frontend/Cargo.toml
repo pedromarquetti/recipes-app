@@ -15,7 +15,7 @@ wasm-logger = "0.2.0"
 log = "0.4"
 # fix for "wasm*-unknown-unknown targets are not supported by default"
 getrandom = { version = "0.2", features = ["js"] }
-db = { version = "0.1.0",path = "../db"}
+db = { version = "*",path = "../db"}
 web-sys = {version = "0.3.64",features = ["HtmlInputElement"]}
 
 yew-notifications = { git = "https://github.com/TheBestTvarynka/yew-notifications.git", features = ["standard-notification"] }
