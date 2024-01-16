@@ -36,15 +36,36 @@ pub async fn create_recipe(
 pub async fn delete_recipe(
     db_connection: DbConnection,
     incoming_recipe: Recipe,
+    user_claims: Option<UserClaims>,
 ) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
+    let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
     if incoming_recipe.id.is_none() {
         return Err(Error::payload_error("must specify recipe id to delete").into());
     }
-    delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
-    Ok(warp::reply::json(&json!({
-        "msg": format!("recipe {} deleted", incoming_recipe.recipe_name)
-    })))
+    let recipe = query_full_recipe(&mut conn, &incoming_recipe).map_err(convert_to_rejection)?;
+    // recipe has owner
+    if let Some(user_id) = &recipe.recipe.user_id {
+        // no login token found OR no match
+        if user_claims.is_none() || user_id.ne(&user_claims.unwrap().user_id) {
+            return Err(Error::user_error("Action not allowed!", StatusCode::FORBIDDEN).into());
+        } else {
+            // user owns recipe
+            delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+
+            return Ok(warp::reply::json(&json!({"msg":"recipe deleted"})));
+        }
+    } else {
+        // recipe has no owner
+        if let Some(claims) = user_claims {
+            if claims.role.eq(&UserRole::Admin) {
+                // admins can edit any recipe
+                delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+                return Ok(warp::reply::json(&json!({"msg":"deleted!"})));
+            }
+        }
+        // no token found
+        return Err(Error::user_error("Recipe cannot be deleted", StatusCode::FORBIDDEN).into());
+    }
 }
 
 pub async fn view_recipe(
@@ -95,7 +116,7 @@ pub async fn update_recipe(
             // user owns recipe
             update_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
 
-            return Ok(warp::reply::json(&json!({"a":""})));
+            return Ok(warp::reply::json(&json!({"msg":"updated recipe"})));
         }
     } else {
         // recipe has no owner

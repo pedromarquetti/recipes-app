@@ -48,6 +48,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(path!("api" / "delete" / "recipe"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(delete_recipe);
     let view_recipe = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
