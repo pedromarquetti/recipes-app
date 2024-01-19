@@ -76,18 +76,21 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(path!("api" / "create" / "step"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(create_step);
     let delete_recipe_step = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "delete" / "step"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(delete_step);
     let update_recipe_step = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "update" / "step"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(update_step);
 
     //  ingredient endpoits

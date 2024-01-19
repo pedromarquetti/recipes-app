@@ -1,5 +1,5 @@
 use serde_json::json;
-use warp::{filters::body::json, http::StatusCode, Rejection, Reply};
+use warp::{http::StatusCode, Rejection, Reply};
 
 use crate::{
     error::{convert_to_rejection, Error},
