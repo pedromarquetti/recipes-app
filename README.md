@@ -22,9 +22,10 @@ In the future I'll implement a Docker setup for easier deployment, for now, run
 
 # TODO
 
-1. improve API Response errors (example:`{
+- [] improve API Response errors (example:`{
     "error": "duplicate key value violates unique constraint \"recipe_recipe_name_key\""
 }` should be `{"error":"key <KEY> already exists"}`)
+- [x] ~~Create a seperate 'user validation function', so there's no repeating code (\*\_route.rs files validate user credentials)~~ done
 
 ## Useful links
 
