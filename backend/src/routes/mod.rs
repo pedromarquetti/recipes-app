@@ -4,15 +4,25 @@ pub mod recipe_route;
 pub mod step_route;
 pub mod user_route;
 
+use std::fmt::Display;
+
 use self::{
     ingredient_route::{create_ingredient, delete_ingredient, update_ingredient},
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
     user_route::{create_user, delete_user, get_user_name, login_user_route},
 };
-use crate::routes::auth::auth;
-use crate::routes::{recipe_route::create_recipe, step_route::create_step};
-use db::db_pool::Pool;
+use crate::{
+    error::convert_to_rejection,
+    jwt::UserClaims,
+    routes::{recipe_route::create_recipe, step_route::create_step},
+};
+use crate::{error::Error, routes::auth::auth};
+use db::{
+    db_pool::{Pool, PooledPgConnection},
+    functions::recipe::query_full_recipe,
+    structs::{FullRecipe, Recipe, RecipeTrait, UserRole},
+};
 use serde_json::json;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
@@ -164,4 +174,28 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
 
 pub async fn ping() -> Result<impl Reply, Rejection> {
     Ok(warp::reply::json(&json!({"msg":"I'm Here"})))
+}
+
+/// checks if current user can create/read/update/delete item
+pub fn validate_permission(recipe: FullRecipe, claims: Option<UserClaims>) -> bool {
+    if let Some(user_id) = &recipe.recipe.user_id {
+        // recipe has owner
+        if claims.is_none() || user_id.ne(&claims.unwrap().user_id) {
+            // no login token found OR no matchva
+            return false;
+        } else {
+            // user owns recipe
+            return true;
+        }
+    } else {
+        // recipe has no owner
+        if let Some(claims) = claims {
+            if claims.role.eq(&UserRole::Admin) {
+                // admins can edit any recipe
+                return true;
+            }
+        }
+        // no token found
+        return false;
+    }
 }
