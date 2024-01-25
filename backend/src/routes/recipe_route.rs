@@ -14,6 +14,8 @@ use db::{
     structs::{FullRecipe, Recipe, UserRole},
 };
 
+use super::validate_permission;
+
 pub async fn create_recipe(
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
@@ -43,27 +45,11 @@ pub async fn delete_recipe(
         return Err(Error::payload_error("must specify recipe id to delete").into());
     }
     let recipe = query_full_recipe(&mut conn, &incoming_recipe).map_err(convert_to_rejection)?;
-    // recipe has owner
-    if let Some(user_id) = &recipe.recipe.user_id {
-        // no login token found OR no match
-        if user_claims.is_none() || user_id.ne(&user_claims.unwrap().user_id) {
-            return Err(Error::user_error("Action not allowed!", StatusCode::FORBIDDEN).into());
-        } else {
-            // user owns recipe
-            delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
 
-            return Ok(warp::reply::json(&json!({"msg":"recipe deleted"})));
-        }
+    if validate_permission(recipe, user_claims) {
+        delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+        return Ok(warp::reply::json(&json!({"msg":"recipe deleted"})));
     } else {
-        // recipe has no owner
-        if let Some(claims) = user_claims {
-            if claims.role.eq(&UserRole::Admin) {
-                // admins can edit any recipe
-                delete_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
-                return Ok(warp::reply::json(&json!({"msg":"deleted!"})));
-            }
-        }
-        // no token found
         return Err(Error::user_error("Recipe cannot be deleted", StatusCode::FORBIDDEN).into());
     }
 }
@@ -106,33 +92,10 @@ pub async fn update_recipe(
     // querying recipe so we can validate ownership
     let recipe = query_full_recipe(&mut conn, &incoming_recipe).map_err(convert_to_rejection)?;
 
-    // if incoming recipe has user_id (owner)
-    if let Some(user_id) = &recipe.recipe.user_id {
-        // throw error if user doesn't have JWT token OR JWT user id does not match
-        if user_claims.is_none() || user_id.ne(&user_claims.expect("expected user claims").user_id)
-        {
-            return Err(Error::user_error("Action Not allowed", StatusCode::FORBIDDEN).into());
-        } else {
-            // user owns recipe
-            update_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
-
-            return Ok(warp::reply::json(&json!({"msg":"updated recipe"})));
-        }
+    if validate_permission(recipe, user_claims) {
+        update_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+        return Ok(warp::reply::json(&json!({"msg":"recipe updated!"})));
     } else {
-        // recipe has no owner
-        // but logged in user tried to edit recipe
-        if let Some(claims) = user_claims {
-            if claims.role.eq(&UserRole::Admin) {
-                // admins can edit any recipe
-                update_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
-                return Ok(warp::reply::json(&json!({"msg":"recipe updated!"})));
-            }
-        }
-        // no user claims and recipe has no owner
-        return Err(Error::user_error(
-            "Recipe has no owner, can't be updated! You must be an admin to edit this recipe",
-            StatusCode::FORBIDDEN,
-        )
-        .into());
+        return Err(Error::user_error("Cannot update recipe", StatusCode::UNAUTHORIZED).into());
     }
 }
