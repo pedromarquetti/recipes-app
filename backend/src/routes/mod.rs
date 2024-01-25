@@ -4,24 +4,20 @@ pub mod recipe_route;
 pub mod step_route;
 pub mod user_route;
 
-use std::fmt::Display;
-
 use self::{
     ingredient_route::{create_ingredient, delete_ingredient, update_ingredient},
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
     user_route::{create_user, delete_user, get_user_name, login_user_route},
 };
+use crate::routes::auth::auth;
 use crate::{
-    error::convert_to_rejection,
     jwt::UserClaims,
     routes::{recipe_route::create_recipe, step_route::create_step},
 };
-use crate::{error::Error, routes::auth::auth};
 use db::{
-    db_pool::{Pool, PooledPgConnection},
-    functions::recipe::query_full_recipe,
-    structs::{FullRecipe, Recipe, RecipeTrait, UserRole},
+    db_pool::Pool,
+    structs::{FullRecipe, UserRole},
 };
 use serde_json::json;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
@@ -109,18 +105,21 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(path!("api" / "create" / "ingredient"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(create_ingredient);
     let delete_recipe_ingredient = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "delete" / "ingredient"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(delete_ingredient);
     let update_recipe_ingredient = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "update" / "ingredient"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(update_ingredient);
 
     // user endpoints

@@ -11,7 +11,7 @@ use db::{
         recipe::query_full_recipe,
         recipe_step::{update_step_query, *},
     },
-    structs::{FullRecipe, Recipe, Step, UserRole},
+    structs::{Recipe, Step},
 };
 
 use super::validate_permission;

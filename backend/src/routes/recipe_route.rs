@@ -11,7 +11,7 @@ use db::{
         create_recipe_query, delete_recipe_query, fuzzy_query, query_full_recipe,
         update_recipe_query,
     },
-    structs::{FullRecipe, Recipe, UserRole},
+    structs::{FullRecipe, Recipe},
 };
 
 use super::validate_permission;
