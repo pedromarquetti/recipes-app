@@ -48,6 +48,9 @@ impl Step {
             step_instruction: String::new(),
             step_duration_min: 0,
         }
+    }   
+    pub fn set_recipe_id(&mut self,id:i32){
+        self.recipe_id = id
     }
 }
 
@@ -78,6 +81,9 @@ impl Ingredient {
             ingredient_quantity: 0,
             quantity_unit: String::new(),
         }
+    }
+    pub fn set_recipe_id(&mut self,id:i32){
+        self.recipe_id = id
     }
 }
 
