@@ -8,7 +8,9 @@ use self::{
     ingredient_route::{create_ingredient, delete_ingredient, update_ingredient},
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
-    user_route::{create_user, delete_user, get_user_name, login_user_route},
+    user_route::{
+        create_user, delete_user, get_user_name, login_user_route, update_user_info_route,
+    },
 };
 use crate::routes::auth::auth;
 use crate::{
@@ -134,6 +136,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(path!("api" / "delete" / "user"))
         .and(pool_filter.clone())
         .and(warp::body::json())
+        .and(auth())
         .and_then(delete_user);
     let get_user_info = warp::post()
         .and(warp::body::content_length_limit(1024 * 10))
@@ -147,10 +150,21 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(login_user_route);
+    let update_user = warp::post()
+        .and(warp::body::content_length_limit(1024 * 10))
+        .and(path!("api" / "login" / "user"))
+        .and(pool_filter.clone())
+        .and(warp::body::json())
+        .and(auth())
+        .and_then(update_user_info_route);
 
     let ping_endpoint = warp::any().and(path!("api" / "ping")).and_then(ping);
 
-    let user_endpoints = create_user.or(get_user_info).or(delete_user).or(login_user);
+    let user_endpoints = create_user
+        .or(get_user_info)
+        .or(delete_user)
+        .or(login_user)
+        .or(update_user);
     let recipe_endpoints = create_recipe
         .or(update_recipe)
         .or(delete_recipe)

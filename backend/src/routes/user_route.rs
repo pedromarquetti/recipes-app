@@ -4,12 +4,14 @@ use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
 use crate::{
     error::{convert_to_rejection, Error},
-    jwt::generate_token,
+    jwt::{generate_token, UserClaims},
 };
 use db::{
     db_pool::{DbConnection, PooledPgConnection},
-    functions::user::{create_user_record, delete_user_record, query_user_info},
-    structs::User,
+    functions::user::{
+        create_user_record, delete_user_record, query_user_info, update_user_record,
+    },
+    structs::{User, UserRole},
 };
 
 pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
@@ -41,24 +43,31 @@ pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply
     }
 }
 
-pub async fn delete_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+pub async fn delete_user(
+    db_conn: DbConnection,
+    user: User,
+    user_claims: Option<UserClaims>,
+) -> Result<impl Reply, Rejection> {
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+    let usr = query_user_info(&mut conn, &user).map_err(convert_to_rejection)?;
+    if check_user_permission(usr, user_claims) {
+        // running query
+        delete_user_record(conn, &user).map_err(convert_to_rejection)?;
 
-    // running query
-    delete_user_record(conn, &user).map_err(convert_to_rejection)?;
-
-    Ok(warp::reply::json(&json!({
-        "msg": format!("user {} deleted", user.user_name)
-    })))
+        return Ok(warp::reply::json(&json!({
+            "msg": format!("user {} deleted", user.user_name)
+        })));
+    }
+    return Err(Error::user_error("User cannot be deleted", StatusCode::FORBIDDEN).into());
 }
 
 pub async fn get_user_name(db_conn: DbConnection, user_id: i32) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
     let mut id = User::new();
     id.set_id(user_id);
 
     // running query
-    let query = query_user_info(conn, &id).map_err(convert_to_rejection)?;
+    let query = query_user_info(&mut conn, &id).map_err(convert_to_rejection)?;
 
     Ok(warp::reply::json(&json!({
         "msg": query.user_name
@@ -66,9 +75,9 @@ pub async fn get_user_name(db_conn: DbConnection, user_id: i32) -> Result<impl R
 }
 
 pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
-    let query = query_user_info(conn, &user).map_err(convert_to_rejection)?;
+    let query = query_user_info(&mut conn, &user).map_err(convert_to_rejection)?;
 
     if verify(&user.user_pwd, &query.user_pwd).map_err(convert_to_rejection)? {
         let token = generate_token(query).map_err(convert_to_rejection)?;
@@ -88,6 +97,45 @@ pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl 
     }
 }
 
+pub async fn update_user_info_route(
+    db_conn: DbConnection,
+    user: User,
+    user_claims: Option<UserClaims>,
+) -> Result<impl Reply, Rejection> {
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+    let usr = query_user_info(&mut conn, &user).map_err(convert_to_rejection)?;
+    if check_user_permission(usr, user_claims) {
+        // running query
+        update_user_record(&mut conn, &user).map_err(convert_to_rejection)?;
+
+        return Ok(warp::reply::json(&json!({
+            "msg": format!("user {} update", user.user_name)
+        })));
+    }
+    return Err(Error::user_error("User cannot be updated", StatusCode::FORBIDDEN).into());
+}
+
 async fn encrypt_pwd(pwd: &str) -> Result<String, Rejection> {
     Ok(hash(pwd, 4).map_err(convert_to_rejection)?)
+}
+
+fn check_user_permission(user: User, claims: Option<UserClaims>) -> bool {
+    if claims.is_none()
+        || user
+            .id
+            .expect("expected valid User ID")
+            .ne(&claims.as_ref().expect("expected valid TOKEN").user_id)
+    {
+        // return false if no token found OR user id != claim
+        return false;
+    } else {
+        if let Some(user_claims) = claims {
+            // token found
+            if user_claims.role.eq(&UserRole::Admin) {
+                // admins can edit any user
+                return true;
+            }
+        }
+        return true;
+    }
 }

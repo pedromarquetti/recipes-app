@@ -21,7 +21,7 @@ pub fn delete_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(
     Ok(())
 }
 
-pub fn query_user_info(mut conn: PooledPgConnection, user: &User) -> Result<User, DieselError> {
+pub fn query_user_info(conn: &mut PooledPgConnection, user: &User) -> Result<User, DieselError> {
     let result: User = user_dsl::recipe_users
         .select((
             user_dsl::id,
@@ -30,14 +30,14 @@ pub fn query_user_info(mut conn: PooledPgConnection, user: &User) -> Result<User
             user_dsl::user_pwd,
         ))
         .filter(user_dsl::user_name.eq(&user.user_name))
-        .first::<User>(&mut conn)?;
+        .first::<User>(conn)?;
     Ok(result)
 }
 
-pub fn update_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(), DieselError> {
+pub fn update_user_record(conn: &mut PooledPgConnection, user: &User) -> Result<(), DieselError> {
     diesel::update(user_dsl::recipe_users)
         .filter(user_dsl::id.eq(user.id))
         .set(user)
-        .execute(&mut conn)?;
+        .execute(conn)?;
     Ok(())
 }
