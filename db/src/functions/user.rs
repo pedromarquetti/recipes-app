@@ -13,6 +13,7 @@ pub fn create_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(
         .execute(&mut conn)?;
     Ok(())
 }
+
 pub fn delete_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(), DieselError> {
     use crate::schema::recipe_users;
     diesel::delete(recipe_users::table)
@@ -40,4 +41,16 @@ pub fn update_user_record(conn: &mut PooledPgConnection, user: &User) -> Result<
         .set(user)
         .execute(conn)?;
     Ok(())
+}
+
+pub fn list_users_query(conn: &mut PooledPgConnection) -> Result<Vec<User>, DieselError> {
+    let users: Vec<User> = user_dsl::recipe_users
+        .select((
+            user_dsl::id,
+            user_dsl::user_name,
+            user_dsl::user_role,
+            user_dsl::user_pwd,
+        ))
+        .get_results(conn)?;
+    Ok(users)
 }

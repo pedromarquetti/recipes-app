@@ -1,4 +1,5 @@
 use bcrypt::{hash, verify};
+use log::{debug, error};
 use serde_json::json;
 use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
@@ -9,7 +10,8 @@ use crate::{
 use db::{
     db_pool::{DbConnection, PooledPgConnection},
     functions::user::{
-        create_user_record, delete_user_record, query_user_info, update_user_record,
+        create_user_record, delete_user_record, list_users_query, query_user_info,
+        update_user_record,
     },
     structs::{User, UserRole},
 };
@@ -113,6 +115,25 @@ pub async fn update_user_info_route(
         })));
     }
     return Err(Error::user_error("User cannot be updated", StatusCode::FORBIDDEN).into());
+}
+
+pub async fn list_users(
+    db_conn: DbConnection,
+    user_claims: Option<UserClaims>,
+) -> Result<impl Reply, Rejection> {
+    if user_claims.is_none()
+        || user_claims
+            .expect("expected valid token")
+            .role
+            .eq(&UserRole::Guest)
+    {
+        return Err(Error::user_error("Cannot see list of users", StatusCode::FORBIDDEN).into());
+    }
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+
+    let users = list_users_query(&mut conn).map_err(convert_to_rejection)?;
+
+    return Ok(warp::reply::json(&json!({"msg":users})));
 }
 
 async fn encrypt_pwd(pwd: &str) -> Result<String, Rejection> {

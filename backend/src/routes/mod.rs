@@ -9,7 +9,8 @@ use self::{
     recipe_route::{delete_recipe, fuzzy_query_recipe, update_recipe, view_recipe},
     step_route::{delete_step, update_step},
     user_route::{
-        create_user, delete_user, get_user_name, login_user_route, update_user_info_route,
+        create_user, delete_user, get_user_name, list_users, login_user_route,
+        update_user_info_route,
     },
 };
 use crate::routes::auth::auth;
@@ -157,11 +158,17 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::body::json())
         .and(auth())
         .and_then(update_user_info_route);
+    let list_users = warp::get()
+        .and(path!("api" / "list" / "user"))
+        .and(pool_filter.clone())
+        .and(auth())
+        .and_then(list_users);
 
     let ping_endpoint = warp::any().and(path!("api" / "ping")).and_then(ping);
 
     let user_endpoints = create_user
         .or(get_user_info)
+        .or(list_users)
         .or(delete_user)
         .or(login_user)
         .or(update_user);
