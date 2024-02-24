@@ -1,5 +1,4 @@
 use bcrypt::{hash, verify};
-use log::{debug, error};
 use serde_json::json;
 use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 

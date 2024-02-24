@@ -49,12 +49,7 @@ async fn main() -> Result<(), Rejection> {
         port.parse::<u16>().expect("expected valid SERVER_PORT"),
     );
     info!("running server at {} ", address);
-    warp::serve(routes)
-        .tls()
-        .cert_path("src/cert/cert.pem")
-        .key_path("src/cert/key.rsa")
-        .bind(address)
-        .await;
+    warp::serve(routes).bind(address).await;
 
     Ok(())
 }
