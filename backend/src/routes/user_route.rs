@@ -4,6 +4,7 @@ use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
 use crate::{
     error::{convert_to_rejection, Error},
+    is_dev_server,
     jwt::{generate_token, UserClaims},
 };
 use db::{
@@ -82,11 +83,21 @@ pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl 
 
     if verify(&user.user_pwd, &query.user_pwd).map_err(convert_to_rejection)? {
         let token = generate_token(query).map_err(convert_to_rejection)?;
-        let cookie = format!(
-            // the below jwt works in dev server + HTTP (lack of Secure flag)
-            "jwt={}; Path=/; HttpOnly; Max-Age=1209600; SameSite=Strict;Secure",
-            token
-        );
+        let cookie: String;
+        if is_dev_server() {
+            // dev server uses http
+            cookie = format!(
+                // the below jwt works in dev server + HTTP (lack of Secure flag)
+                "jwt={}; Path=/; HttpOnly; Max-Age=1209600; SameSite=Strict",
+                token
+            );
+        } else {
+            cookie = format!(
+                // the below jwt works in prod server + HTTPS (Secure flag)
+                "jwt={}; Path=/; HttpOnly; Max-Age=1209600; SameSite=Strict;Secure",
+                token
+            );
+        }
         let json_resp = warp::reply::json(&json!(
             {
                 "msg":format!("login success!",)

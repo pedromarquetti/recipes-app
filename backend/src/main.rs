@@ -22,6 +22,19 @@ fn get_db_url() -> String {
     env::var("DATABASE_URL").unwrap_or(String::from(DEFAULT_DATABASE_URL))
 }
 
+/// Checks if DEV_ENV var is set, return value, matching the var string and returning error if invalid.
+/// If DEV_ENV is not set, it returns false.
+pub fn is_dev_server() -> bool {
+    match env::var("DEV_ENV") {
+        Ok(val) => match val.as_str() {
+            "true" => true,
+            "false" => false,
+            _ => panic!("DEV_ENV must be either 'true' or 'false'"),
+        },
+        Err(_) => false,
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Rejection> {
     if env::var_os("RUST_LOG").is_none() {
