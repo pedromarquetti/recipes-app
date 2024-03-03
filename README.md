@@ -20,6 +20,21 @@ In the future I'll implement a Docker setup for easier deployment, for now, run
    - `cargo run`
    - Note: backend is expecting a DATABASE_URL env. var with a valid postgresql link
 
+## Local setup
+
+1. Diesel cli requires
+
+`sudo apt install default-libmysqlclient-dev libsqlite3-dev libpq-dev`
+
+1. Then run
+
+`cargo install diesel_cli`
+
+1. Create .env file
+
+`echo "DATABASE_URL=postgresql://dev:dev@localhost:5432" >> .env`
+`echo JWT_SECRET_KEY="secret" >> .env`
+
 # TODO
 
 - [] improve API Response errors (example:`{
