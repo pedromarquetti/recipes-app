@@ -29,7 +29,7 @@ pub fn is_dev_server() -> bool {
         Ok(val) => match val.as_str() {
             "true" => true,
             "false" => false,
-            _ => panic!("DEV_ENV must be either 'true' or 'false'"),
+            _ => false,
         },
         Err(_) => false,
     }

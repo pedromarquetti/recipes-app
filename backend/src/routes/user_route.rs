@@ -150,6 +150,13 @@ async fn encrypt_pwd(pwd: &str) -> Result<String, Rejection> {
     Ok(hash(pwd, 4).map_err(convert_to_rejection)?)
 }
 
+/// Function to check user permission
+///
+/// Admins can edit any user
+///
+/// Users can edit themselves
+///
+/// Returns true if user can edit
 fn check_user_permission(user: User, claims: Option<UserClaims>) -> bool {
     if claims.is_none()
         || user
