@@ -39,8 +39,8 @@ pub struct Step {
     pub step_instruction: String,
     pub step_duration_min: i32,
 }
-impl Step {
-    pub fn new() -> Self {
+impl Default for Step {
+    fn default() -> Self {
         Step {
             id: None,
             recipe_id: 0,
@@ -48,7 +48,10 @@ impl Step {
             step_instruction: String::new(),
             step_duration_min: 0,
         }
-    }   
+    }
+}
+impl Step {
+ 
     pub fn set_recipe_id(&mut self,id:i32){
         self.recipe_id = id
     }
@@ -71,9 +74,8 @@ pub struct Ingredient {
     pub ingredient_quantity: i32,
     pub quantity_unit: String,
 }
-impl Ingredient {
-    /// Empty Full Recipe, meant to be used as a placeholder
-    pub fn new() -> Self {
+impl Default for Ingredient {
+    fn default() -> Self {
         Ingredient {
             id: None,
             recipe_id: 0,
@@ -82,6 +84,9 @@ impl Ingredient {
             quantity_unit: String::new(),
         }
     }
+}
+impl Ingredient {
+
     pub fn set_recipe_id(&mut self,id:i32){
         self.recipe_id = id
     }
@@ -101,8 +106,8 @@ pub struct Recipe {
     pub recipe_name: String,
     pub recipe_observations: Option<Vec<String>>,
 }
-impl Recipe {
-    pub fn new() -> Self {
+impl Default for Recipe {
+    fn default() -> Self {
         Recipe {
             id: None,
             user_id: None,
@@ -110,6 +115,8 @@ impl Recipe {
             recipe_observations: None,
         }
     }
+}
+impl Recipe {
 
     /// Change recipe name
     pub fn set_name<S>(&mut self, name: S)
@@ -138,16 +145,18 @@ pub struct FullRecipe {
     pub ingredients: Vec<Ingredient>,
     pub steps: Vec<Step>,
 }
-
-impl FullRecipe {
-    /// Empty Full Recipe, meant to be used as a placeholder
-    pub fn new() -> Self {
+impl Default for FullRecipe {
+    fn default() -> Self {
         FullRecipe {
-            recipe: Recipe::new(),
-            steps: vec![Step::new()],
-            ingredients: vec![Ingredient::new()],
+            recipe: Recipe::default(),
+            ingredients: vec![Ingredient::default()],
+            steps: vec![Step::default()],
         }
     }
+}
+
+impl FullRecipe {
+
     /// modify Recipe inside FullRecipe
     pub fn set_recipe(&mut self, recipe: Recipe) {
         self.recipe = recipe
@@ -239,16 +248,18 @@ pub struct User {
     pub user_role: UserRole,
     pub user_pwd: String,
 }
-
-impl User {
-    pub fn new() -> Self {
+impl Default for User {
+    fn default() -> Self {
         User {
             id: None,
-            user_name: "".into(),
-            user_pwd: "".into(),
+            user_name: String::new(),
             user_role: UserRole::Guest,
+            user_pwd: String::new(),
         }
     }
+}
+
+impl User {
     /// modify Steps inside FullRecipe
     pub fn set_id(&mut self, user_id: i32) {
         self.id = Some(user_id)
