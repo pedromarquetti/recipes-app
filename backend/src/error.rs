@@ -1,4 +1,4 @@
-use std::convert::Infallible;
+use std::{convert::Infallible, str::Utf8Error};
 
 use bcrypt::BcryptError;
 use diesel::result::DatabaseErrorKind;
@@ -171,5 +171,17 @@ impl From<BcryptError> for Error {
 impl From<jsonwebtoken::errors::Error> for Error {
     fn from(value: jsonwebtoken::errors::Error) -> Self {
         Error::user_error(value.to_string(), StatusCode::BAD_REQUEST)
+    }
+}
+
+impl From<Utf8Error> for Error {
+    fn from(value: Utf8Error) -> Self {
+        Error::payload_error(value.to_string())
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Error::payload_error(value.to_string())
     }
 }
