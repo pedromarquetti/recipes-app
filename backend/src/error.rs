@@ -1,4 +1,4 @@
-use std::{convert::Infallible, str::Utf8Error};
+use std::{convert::Infallible, error::Error as StdError, num::ParseIntError, str::Utf8Error};
 
 use bcrypt::BcryptError;
 use diesel::result::DatabaseErrorKind;
@@ -8,7 +8,7 @@ use serde_json::json;
 use warp::{
     body::BodyDeserializeError,
     hyper::StatusCode,
-    reject::{self, MethodNotAllowed, Reject},
+    reject::{self, InvalidQuery, MethodNotAllowed, Reject},
     reply::{self, WithStatus},
     Rejection, Reply,
 };
@@ -27,17 +27,49 @@ pub async fn handle_rejection(err: Rejection) -> Result<WithStatus<Box<dyn Reply
     if let Some(err) = err.find::<Error>() {
         error!("{:?}", err);
         Ok(err.convert_to_json())
-    } else if let Some(err) = err.find::<MethodNotAllowed>() {
-        // Reject invalid HTTP req for specified path.
-        error!("{}", err);
-        Ok(Error::method_not_allowed(err.to_string()).convert_to_json())
+    } else if let Some(err) = err.find::<InvalidQuery>() {
+        error!("{:?}", err);
+
+        Ok(Error::payload_error(format!(
+            "Query Error: {:?} - msg {:?}",
+            err.to_string(),
+            err.source()
+        ))
+        .convert_to_json())
+    } else if let Some(err) = err.find::<std::io::Error>() {
+        error!("{:?}", err);
+
+        Ok(Error::payload_error(format!(
+            "Payload Error: 
+                {:?} - msg {:?} ",
+            err.to_string(),
+            err.source()
+        ))
+        .convert_to_json())
     } else if let Some(err) = err.find::<BodyDeserializeError>() {
         // received invalid json body
         error!("{}", err);
 
-        Ok(Error::payload_error(format!("Payload Error: {:?}", err.to_string())).convert_to_json())
+        Ok(Error::payload_error(format!(
+            "Payload Error: 
+                {:?} - msg {:?} ",
+            err.to_string(),
+            err.source()
+        ))
+        .convert_to_json())
+    } else if let Some(err) = err.find::<MethodNotAllowed>() {
+        // Reject invalid HTTP req for specified path.
+        error!("{}", err);
+
+        Ok(Error::payload_error(format!(
+            "Payload Error: 
+                {:?} - msg {:?} ",
+            err.to_string(),
+            err.source()
+        ))
+        .convert_to_json())
     } else if err.is_not_found() {
-        // received invalid json body
+        //received invalid json body
         error!("{:?}", err);
 
         Ok(Error::not_found(format!("Not Found!")).convert_to_json())
@@ -182,6 +214,12 @@ impl From<Utf8Error> for Error {
 
 impl From<std::io::Error> for Error {
     fn from(value: std::io::Error) -> Self {
+        Error::payload_error(value.to_string())
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(value: ParseIntError) -> Self {
         Error::payload_error(value.to_string())
     }
 }
