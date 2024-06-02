@@ -1,5 +1,5 @@
 use db::structs::{FullRecipe, Ingredient, Step};
-use log::{debug, error, info};
+use log::{error, info};
 use web_sys::HtmlInputElement;
 
 use yew::{platform::spawn_local, prelude::*};
@@ -23,7 +23,7 @@ use crate::components::{
 #[function_component(NewRecipe)]
 /// Handles recipe creation
 pub fn new_recipe() -> Html {
-    let recipe_state = use_state(|| FullRecipe::new());
+    let recipe_state = use_state(|| FullRecipe::default());
 
     let recipe_name_ref = use_node_ref();
 
@@ -82,7 +82,7 @@ pub fn new_recipe() -> Html {
                 .expect("Invalid element!");
 
             // creating a FullRecipe
-            let full_recipe = FullRecipe::new();
+            let full_recipe = FullRecipe::default();
             let mut full_recipe = full_recipe.clone();
 
             // getting the Recipe from full_recipe
@@ -175,7 +175,7 @@ pub fn new_recipe() -> Html {
                                 match delete_recipe(recipe_state.recipe.clone()).await {
                                     Ok(msg)=>{
                                         info!("{:?}",msg);
-                                        recipe_state.set(FullRecipe::new())
+                                        recipe_state.set(FullRecipe::default())
                                     },
                                     Err(err)=>error!("{:?}",err)
 

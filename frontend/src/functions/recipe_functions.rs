@@ -1,5 +1,6 @@
 use db::structs::{FullRecipe, Recipe};
 use gloo_net::{http::Request, Error as GlooError};
+use log::{debug, error};
 use serde_json::{json, Value};
 
 use super::{parse_api_response, ApiResponse};
@@ -10,13 +11,9 @@ use super::{parse_api_response, ApiResponse};
 ///
 /// 1. ok FullRecipe
 /// 1. error message from backend
+// pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse<FullRecipe, String>, GlooError> {
 pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse<FullRecipe, String>, GlooError> {
-    let req = Request::post("/api/get/recipes")
-        .json(&json!({
-            "id":recipe_id,
-            "recipe_name": "",
-            "recipe_ingredients": [""],
-        }))?
+    let req = Request::get(&format!("/api/get/recipe/?id={recipe_id}"))
         .send()
         .await?;
 
@@ -26,13 +23,7 @@ pub async fn fetch_recipe(recipe_id: i32) -> Result<ApiResponse<FullRecipe, Stri
 
 pub async fn fuzzy_list_recipe(name: String) -> Result<Vec<Recipe>, GlooError> {
     // updating endpoint addresses
-    let req = Request::post("/api/get/recipes")
-        .json::<Recipe>(&Recipe {
-            id: None,
-            recipe_name: name,
-            user_id: None,
-            recipe_observations: None,
-        })?
+    let req = Request::get(&format!("/api/get/recipes/?name={}", name))
         .send()
         .await?;
     req.json::<Vec<Recipe>>().await

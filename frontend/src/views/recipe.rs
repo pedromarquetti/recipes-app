@@ -21,7 +21,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
 
     // same as:
     // const [recipe,setRecipe] = useState(recipe)
-    let recipe_state = use_state(|| FullRecipe::new());
+    let recipe_state = use_state(|| FullRecipe::default());
 
     {
         let recipe_state = recipe_state.clone();
