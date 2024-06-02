@@ -20,7 +20,7 @@ pub fn delete_recipe_ingredient_query(
     ingredient: &Ingredient,
 ) -> Result<(), DieselError> {
     diesel::delete(ingredient_dsl::recipe_ingredient)
-        .filter(ingredient_dsl::id.eq(ingredient.id.unwrap()))
+        .filter(ingredient_dsl::id.eq(ingredient.id.expect("unexpected error!")))
         .execute(&mut conn)?;
     Ok(())
 }

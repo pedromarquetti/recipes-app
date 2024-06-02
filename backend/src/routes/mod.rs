@@ -20,8 +20,9 @@ use crate::{
 };
 use db::{
     db_pool::Pool,
-    structs::{FullRecipe, UserRole},
+    structs::{FullRecipe, Ingredient, Step, UrlRecipeQuery, UrlUserQuery, UserRole},
 };
+use log::debug;
 use serde_json::json;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
@@ -38,7 +39,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
             "content-type",
         ])
         // allowing methods that will be used by/allowed to the client
-        .allow_methods(vec![Method::POST])
+        .allow_methods(vec![Method::POST, Method::GET])
         // from my understanding, since this is a public API, I can allow any origin here
         .allow_any_origin();
 
@@ -46,56 +47,48 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
 
     // recipe endpoints
     let create_recipe = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "recipe"))
+        .and(warp::body::json())
         .and(auth())
         .and(pool_filter.clone())
-        .and(warp::body::json())
         .and_then(create_recipe);
-    let delete_recipe = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
+    let delete_recipe = warp::get()
         .and(path!("api" / "delete" / "recipe"))
-        .and(pool_filter.clone())
-        .and(warp::body::json())
+        .and(warp::query::<UrlRecipeQuery>())
         .and(auth())
+        .and(pool_filter.clone())
         .and_then(delete_recipe);
-    let view_recipe = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
-        .and(path!("api" / "view" / "recipe"))
+    let view_recipe = warp::get()
+        .and(path!("api" / "get" / "recipe"))
+        .and(warp::query::<UrlRecipeQuery>())
         .and(pool_filter.clone())
-        .and(warp::body::json())
         .and_then(view_recipe);
-    let fuzzy_query = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
+    let fuzzy_query = warp::get()
         .and(path!("api" / "get" / "recipes"))
+        .and(warp::query::<UrlRecipeQuery>())
         .and(pool_filter.clone())
-        .and(warp::body::json())
         .and_then(fuzzy_query_recipe);
     let update_recipe = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "update" / "recipe"))
+        .and(warp::body::json())
         .and(auth())
         .and(pool_filter.clone())
-        .and(warp::body::json())
         .and_then(update_recipe);
 
     //  step endpoints
     let create_recipe_step = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "step"))
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and(auth())
         .and_then(create_step);
     let delete_recipe_step = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "delete" / "step"))
-        .and(pool_filter.clone())
-        .and(warp::body::json())
+        .and(warp::query::<Step>())
         .and(auth())
+        .and(pool_filter.clone())
         .and_then(delete_step);
     let update_recipe_step = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "update" / "step"))
         .and(pool_filter.clone())
         .and(warp::body::json())
@@ -104,21 +97,18 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
 
     //  ingredient endpoits
     let create_recipe_ingredient = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "ingredient"))
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and(auth())
         .and_then(create_ingredient);
     let delete_recipe_ingredient = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "delete" / "ingredient"))
-        .and(pool_filter.clone())
-        .and(warp::body::json())
+        .and(warp::body::json::<Ingredient>())
         .and(auth())
+        .and(pool_filter.clone())
         .and_then(delete_ingredient);
     let update_recipe_ingredient = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "update" / "ingredient"))
         .and(pool_filter.clone())
         .and(warp::body::json())
@@ -127,32 +117,28 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
 
     // user endpoints
     let create_user = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "create" / "user"))
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(create_user);
-    let delete_user = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
+    let delete_user = warp::get()
         .and(path!("api" / "delete" / "user"))
-        .and(pool_filter.clone())
-        .and(warp::body::json())
+        .and(warp::query::<UrlUserQuery>())
         .and(auth())
-        .and_then(delete_user);
-    let get_user_info = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
-        .and(path!("api" / "get" / "username"))
         .and(pool_filter.clone())
-        .and(warp::body::json())
+        .and_then(delete_user);
+    let get_user_info = warp::get()
+        .and(path!("api" / "get" / "username"))
+        .and(warp::query::<UrlUserQuery>())
+        .and(auth())
+        .and(pool_filter.clone())
         .and_then(get_user_name);
     let login_user = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "login" / "user"))
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and_then(login_user_route);
     let update_user = warp::post()
-        .and(warp::body::content_length_limit(1024 * 10))
         .and(path!("api" / "login" / "user"))
         .and(pool_filter.clone())
         .and(warp::body::json())

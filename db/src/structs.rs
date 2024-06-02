@@ -1,9 +1,6 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
-use std::{
-    fmt::Debug,
-    io::{Error,  Write},
-};
+use std::{fmt::Debug, io::{  Error as IOError, Write}};
 
 use diesel::{
     deserialize::{FromSql, FromSqlRow},
@@ -14,7 +11,10 @@ use diesel::{
     sql_types::Text,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Serialize,
+
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 /// This struct represents possible Ok Values the API can generate
@@ -134,6 +134,30 @@ impl Recipe {
 
     pub fn set_observation(&mut self, obs: Option<Vec<String>>) {
         self.recipe_observations = obs
+    }
+}
+
+
+pub trait RecipeTrait {}
+impl RecipeTrait for FullRecipe {}
+impl RecipeTrait for Recipe {}
+impl RecipeTrait for Ingredient {}
+impl RecipeTrait for Step {}
+
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+pub struct UrlRecipeQuery {
+    pub id:Option<i32>,
+    pub name:Option<String>,
+    
+}
+
+impl Default for UrlRecipeQuery {
+    fn default() -> Self {
+        UrlRecipeQuery {
+            id: None,
+            name: None,
+        }
     }
 }
 
@@ -265,13 +289,23 @@ impl User {
         self.id = Some(user_id)
     }
     /// Password validation function
-    pub fn validate(&self, pwd: &str) -> Result<String, Error> {
+    pub fn validate(&self, pwd: &str) -> Result<String, IOError> {
         return Ok(pwd.into());
     }
 }
 
-pub trait RecipeTrait {}
-impl RecipeTrait for FullRecipe {}
-impl RecipeTrait for Recipe {}
-impl RecipeTrait for Ingredient {}
-impl RecipeTrait for Step {}
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+pub struct UrlUserQuery {       
+    pub id:  Option<i32>,
+    pub name:Option<String>,
+    
+}
+
+impl Default for UrlUserQuery {
+    fn default() -> Self {
+        UrlUserQuery {
+            id: None,
+            name: None,
+        }
+    }
+}
