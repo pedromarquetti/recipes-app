@@ -86,7 +86,6 @@ pub async fn handle_rejection(err: Rejection) -> Result<WithStatus<Box<dyn Reply
 /// types of errors
 enum ErrorKind {
     NotFound,
-    InvalidRequest,
     UniqueViolation,
     DatabaseError,
     PayloadError,
@@ -117,14 +116,6 @@ impl Error {
             msg: msg.into(),
         }
     }
-    pub fn method_not_allowed<S: Into<String>>(msg: S) -> Self {
-        Self {
-            kind: ErrorKind::InvalidRequest,
-            status_code: StatusCode::BAD_REQUEST,
-            msg: msg.into(),
-        }
-    }
-
     pub fn db_error<S: Into<String>>(msg: S) -> Self {
         Self {
             kind: ErrorKind::DatabaseError,
@@ -162,7 +153,6 @@ impl Error {
         let body = match &self.kind {
             ErrorKind::NotFound => Box::new(reply::json(&json!({ "error": msg }))),
             ErrorKind::UniqueViolation => Box::new(reply::json(&json!({ "error": msg }))),
-            ErrorKind::InvalidRequest => Box::new(reply::json(&json!({ "error": msg }))),
             ErrorKind::DatabaseError => Box::new(reply::json(&json!({ "error": msg }))),
             ErrorKind::PayloadError => Box::new(reply::json(&json!({ "error": msg }))),
             ErrorKind::InternalServerError => Box::new(reply::json(&json!({ "error": msg }))),

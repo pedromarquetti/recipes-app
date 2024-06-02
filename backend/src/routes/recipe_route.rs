@@ -1,5 +1,3 @@
-use log::debug;
-use percent_encoding::percent_decode_str;
 use serde_json::json;
 use warp::{http::StatusCode, Rejection, Reply};
 
@@ -62,7 +60,6 @@ pub async fn view_recipe(
     incoming_query: UrlRecipeQuery,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    debug!("{:?}", incoming_query);
     if incoming_query.id.is_none() && incoming_query.name.is_none() {
         return Err(Error::payload_error("name or id must be supplied!").into());
     }
@@ -78,7 +75,6 @@ pub async fn fuzzy_query_recipe(
     incoming_query: UrlRecipeQuery,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    debug!("{:?}", incoming_query);
     if incoming_query.name.is_none() {
         return Err(Error::payload_error("name must be supplied!").into());
     }
