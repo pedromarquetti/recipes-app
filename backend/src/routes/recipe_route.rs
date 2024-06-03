@@ -29,10 +29,10 @@ pub async fn create_recipe(
         recipe.set_user_id(claims.user_id)
     }
 
-    // sending query to db
-    let created_recipe = create_recipe_query(conn, &recipe).map_err(convert_to_rejection)?;
-
-    Ok(warp::reply::json(&created_recipe))
+    Ok(warp::reply::json(
+        // sending query to db
+        &create_recipe_query(conn, &recipe).map_err(convert_to_rejection)?,
+    ))
 }
 
 pub async fn delete_recipe(
@@ -64,11 +64,9 @@ pub async fn view_recipe(
         return Err(Error::payload_error("name or id must be supplied!").into());
     }
     let mut conn = db_connection.map_err(convert_to_rejection)?;
-
-    return Ok(warp::reply::json(&json!(
-            {"msg":query_full_recipe(&mut conn, &incoming_query).map_err(convert_to_rejection)?
-        }
-    )));
+    return Ok(warp::reply::json(
+        &query_full_recipe(&mut conn, &incoming_query).map_err(convert_to_rejection)?,
+    ));
 }
 
 pub async fn fuzzy_query_recipe(
