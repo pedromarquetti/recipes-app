@@ -30,27 +30,26 @@ where
         // err key found in response
         error!("server responded with error: {err}");
         Ok(ApiResponse::ApiError(
-            serde_json::from_value(err.clone()).map_err(|e| {
+            serde_json::from_value::<M>(err.clone()).map_err(|e| {
                 error!("an error occurred:{:?}", e.to_string());
                 GlooError::SerdeError(e)
             })?,
         ))
     } else if let Some(msg) = res.get("msg") {
-        // parsing msg key
-        debug!("server responded with message: {msg}");
         // handles generic messages from the backend
-        Ok(ApiResponse::OkRecipe(
-            serde_json::from_value::<R>(msg.clone()).map_err(|e| {
+        Ok(ApiResponse::ApiMessage(
+            serde_json::from_value::<M>(msg.clone()).map_err(|e| {
                 // handling parse error
                 error!("an error occurred: {:?}", e.to_string());
                 GlooError::SerdeError(e)
             })?,
         ))
     } else {
-        Ok(ApiResponse::ApiMessage(
-            serde_json::from_value(res).map_err(|e| {
+        // if no key is found, the try parsing the response as a RecipeTrait
+        Ok(ApiResponse::OkRecipe(
+            serde_json::from_value::<R>(res).map_err(|e| {
                 error!(
-                    "fetch ok, but an error occurred (probably trying to parse):{:?}",
+                    "an error occurred (probably trying to parse):{:?}",
                     e.to_string()
                 );
                 GlooError::SerdeError(e)
