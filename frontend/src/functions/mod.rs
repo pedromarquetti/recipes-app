@@ -48,10 +48,7 @@ where
         // if no key is found, the try parsing the response as a RecipeTrait
         Ok(ApiResponse::OkRecipe(
             serde_json::from_value::<R>(res).map_err(|e| {
-                error!(
-                    "an error occurred (probably trying to parse):{:?}",
-                    e.to_string()
-                );
+                error!("an error occurred: {:?}", e.to_string());
                 GlooError::SerdeError(e)
             })?,
         ))
