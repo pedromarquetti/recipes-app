@@ -1,7 +1,6 @@
 use db::structs::{FullRecipe, Ingredient, Recipe};
 use gloo_net::{http::Request, Error as GlooError};
-use log::{debug, error};
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use super::{parse_api_response, ApiResponse};
 

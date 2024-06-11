@@ -1,4 +1,5 @@
 pub mod recipe_functions;
+pub mod user_functions;
 
 use db::structs::RecipeTrait;
 use gloo_net::Error as GlooError;

@@ -1,5 +1,4 @@
 use super::{UserLogin, UserRegister};
-use web_sys::HtmlElement;
 use yew::prelude::*;
 
 enum UserPageState {

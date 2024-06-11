@@ -207,7 +207,7 @@ impl FullRecipe {
 )]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
-    Guest,
+    User,
     Admin,
 }
 
@@ -218,7 +218,7 @@ impl ToSql<Text, Pg> for UserRole {
         out: &mut diesel::serialize::Output<'b, '_, Pg>,
     ) -> diesel::serialize::Result {
         match self {
-            UserRole::Guest => {
+            UserRole::User => {
                 // self.to_sql(out)
                 out.write(b"guest")?
                 
@@ -241,7 +241,7 @@ impl FromSql<Text, Pg> for UserRole {
     ) -> diesel::deserialize::Result<Self> {
         let s = String::from_sql(bytes)?;
         match s.as_str() {
-            "guest" => Ok(UserRole::Guest),
+            "guest" => Ok(UserRole::User),
             "admin" => Ok(UserRole::Admin),
             x => Err(format!("unknown variant: {:?},", x).into()),
         }
@@ -254,7 +254,7 @@ impl FromSql<Text, Pg> for UserRole {
 }
 
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize,Clone, Debug, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
     // derive( Queryable, Selectable, Insertable, Identifiable),
     derive(
@@ -277,7 +277,7 @@ impl Default for User {
         User {
             id: None,
             user_name: String::new(),
-            user_role: UserRole::Guest,
+            user_role: UserRole::User,
             user_pwd: String::new(),
         }
     }

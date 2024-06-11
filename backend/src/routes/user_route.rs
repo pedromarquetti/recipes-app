@@ -162,7 +162,7 @@ pub async fn list_users(
         || user_claims
             .expect("expected valid token")
             .role
-            .eq(&UserRole::Guest)
+            .eq(&UserRole::User)
     {
         return Err(Error::user_error("Cannot see list of users", StatusCode::FORBIDDEN).into());
     }

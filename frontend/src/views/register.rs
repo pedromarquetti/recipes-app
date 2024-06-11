@@ -1,23 +1,71 @@
-use crate::components::input_component::{Input, InputType};
-use yew::prelude::*;
+use db::structs::User;
+use log::{error, info};
+use web_sys::HtmlInputElement;
+use yew::{platform::spawn_local, prelude::*};
+
+use crate::{
+    components::input_component::{Input, InputType},
+    functions::{user_functions::create_user, ApiResponse},
+};
 
 #[function_component(UserRegister)]
 pub fn user_register() -> Html {
-    let node_ref = use_node_ref();
+    let user_name_ref = use_node_ref();
+    let user_pwd_ref = use_node_ref();
+
+    let onsubmit = {
+        let user_name_ref = user_name_ref.clone();
+        let user_pwd_ref = user_pwd_ref.clone();
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+
+            let user_name_ref = user_name_ref
+                .clone()
+                .cast::<HtmlInputElement>()
+                .unwrap()
+                .value();
+            let user_pwd_ref = user_pwd_ref
+                .clone()
+                .cast::<HtmlInputElement>()
+                .unwrap()
+                .value();
+
+            let mut usr = User::default();
+            usr.user_name = user_name_ref;
+            usr.user_pwd = user_pwd_ref;
+
+            spawn_local(async move {
+                match create_user(usr).await {
+                    Ok(ok_login) => match ok_login {
+                        ApiResponse::ApiError(err) => {
+                            error!("API error: {:?}", err);
+                        }
+                        ApiResponse::ApiMessage(msg) => {
+                            info!("API message: {:?}", msg);
+                        }
+                        _ => {} // this is a placeholder
+                    },
+                    Err(error) => {
+                        error!("error: {:?}", error);
+                    }
+                }
+            })
+        })
+    };
 
     html! {
         <div class="register-page">
             <h1>{"Register new user"}</h1>
-            <form>
+            <form {onsubmit}>
             <Input
-                input_node_ref={node_ref.clone()}
-                input_placeholder={"user"}
+                input_node_ref={user_name_ref.clone()}
+                input_placeholder={"username"}
                 is_required={true}
 
                 input_name={"user name"}
                 input_type={InputType::Text}/>
             <Input
-                input_node_ref={node_ref.clone()}
+                input_node_ref={user_pwd_ref.clone()}
                 input_placeholder={"password"}
                 input_name={"user password"}
                 is_required={true}
