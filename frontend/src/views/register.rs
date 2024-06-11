@@ -23,6 +23,7 @@ pub fn user_register() -> Html {
                 is_required={true}
 
                 input_type={InputType::Password}/>
+            <button>{"Register"}</button>
             </form>
         </div>
     }

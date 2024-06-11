@@ -7,10 +7,9 @@ pub fn navbar() -> Html {
     html! {
         <nav class="top-nav">
             <Link<Route> to={Route::Home} >{"Home"}</ Link<Route>>
-
-
             <Link<Route> to={Route::NewRecipe}>{"New Recipe"}</Link<Route>>
-        <p>{"todo: implement user login"}</p>
+            <Link<Route> to={Route::UserPage}>{"User Register/Login"}</Link<Route>>
+
         </nav>
     }
 }

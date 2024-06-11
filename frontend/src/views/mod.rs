@@ -5,8 +5,10 @@ pub mod new_recipe;
 pub mod recipe;
 pub mod recipe_list;
 pub mod register;
+pub mod user_page;
 
 use recipe::RecipePage;
+use user_page::UserPage;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -26,17 +28,14 @@ use crate::views::new_recipe::NewRecipe;
 pub enum Route {
     #[at("/")]
     Home,
-    #[at("/login")]
-    Login,
-    #[at("/register")]
-    Register,
     #[at("/recipe/:id")]
     Recipe { id: i32 },
     #[at("/recipe/list/:name")]
     RecipeList { name: String },
     #[at("/recipe/add")]
     NewRecipe,
-
+    #[at("/user-auth")]
+    UserPage,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -68,16 +67,12 @@ pub fn switch(route: Route) -> Html {
             <RecipePage recipe_id={id}/>
             }
         }
-        Route::Login => {
+        Route::UserPage => {
             html! {
-                <UserLogin/>
+                <UserPage/>
             }
         }
-        Route::Register => {
-            html! {
-                <UserRegister/>
-            }
-        }
+
         Route::NewRecipe => {
             html! {
                 <NewRecipe/>
