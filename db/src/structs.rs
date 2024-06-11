@@ -220,14 +220,11 @@ impl ToSql<Text, Pg> for UserRole {
         match self {
             UserRole::User => {
                 // self.to_sql(out)
-                out.write(b"guest")?
+                out.write(b"user")?
                 
             }
             UserRole::Admin => {
-                out.write(b"admin")?
-                // self.to_sql(out)
-
-                
+                out.write(b"admin")?                
             }
         };
         Ok(IsNull::No)
@@ -241,7 +238,7 @@ impl FromSql<Text, Pg> for UserRole {
     ) -> diesel::deserialize::Result<Self> {
         let s = String::from_sql(bytes)?;
         match s.as_str() {
-            "guest" => Ok(UserRole::User),
+            "user" => Ok(UserRole::User),
             "admin" => Ok(UserRole::Admin),
             x => Err(format!("unknown variant: {:?},", x).into()),
         }

@@ -5,7 +5,7 @@ use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
-use crate::functions::recipe_functions::delete_recipe;
+use crate::functions::recipe_functions::{create_ingredient, create_step, delete_recipe};
 use crate::functions::{recipe_functions::create_recipe, ApiResponse};
 
 use crate::views::Route;
@@ -227,6 +227,7 @@ pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
         let callback = props.callback.clone();
 
         Callback::from(move |event: SubmitEvent| {
+            let callback = callback.clone();
             let ingredient_list_state = ingredient_list_state.clone();
             // they have to be cloned because of the 'move' inside the closure
 
@@ -244,18 +245,36 @@ pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
                 id: None,
                 recipe_id,
                 ingredient_name: name.value(),
-                ingredient_quantity: quantity.value().parse::<i32>().unwrap(),
+                ingredient_quantity: quantity.value().parse::<i32>().unwrap_or(0),
                 quantity_unit: unit.value(),
             };
+            {
+                let ingredient = ingredient.clone();
+                spawn_local(async move {
+                    match create_ingredient(vec![ingredient.clone()]).await {
+                        Ok(api_response) => match api_response {
+                            ApiResponse::ApiError(msg) => {
+                                error!("error: {}", msg)
+                            }
+                            ApiResponse::ApiMessage(msg) => {
+                                info!("{:?}", msg);
+                                // appending values to cloned vec![]
+                                cloned_ingredient_list.push(ingredient);
 
-            // appending values to cloned vec![]
-            cloned_ingredient_list.push(ingredient);
+                                // sending ingredient list to parent component
+                                callback.emit(cloned_ingredient_list.clone());
 
-            // sending ingredient list to parent component
-            callback.emit(cloned_ingredient_list.clone());
-
-            // setting ingredient list state
-            ingredient_list_state.set(cloned_ingredient_list.clone());
+                                // setting ingredient list state
+                                ingredient_list_state.set(cloned_ingredient_list.clone());
+                            }
+                            _ => {}
+                        },
+                        Err(err) => {
+                            error!("{:?}", err);
+                        }
+                    }
+                });
+            }
         })
     };
 
@@ -323,6 +342,8 @@ pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
         let step_list_state = step_list_state.clone();
 
         Callback::from(move |event: SubmitEvent| {
+            let step_list_state = step_list_state.clone();
+
             // they have to be cloned because of the 'move' inside the closure
 
             // "cloned" represents the "step_list_state" vec![]
@@ -336,17 +357,49 @@ pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
 
             event.prevent_default();
 
-            // appending values to cloned vec![]
-            cloned_step_list.push(Step {
-                id: None,
-                recipe_id,
-                step_name: name.value(),
-                step_instruction: step_instruction.value(),
-                step_duration_min: step_duration_min.value().parse::<i32>().unwrap(),
-            });
-            // setting cloned local vec as the current list_state
-            callback.emit(cloned_step_list.clone());
-            step_list_state.set(cloned_step_list);
+            {
+                let callback = callback.clone();
+                let step = Step {
+                    id: None,
+                    recipe_id,
+                    step_name: name.value(),
+                    step_instruction: step_instruction.value(),
+                    step_duration_min: step_duration_min.value().parse::<i32>().unwrap(),
+                };
+
+                spawn_local(async move {
+                    let step_list_state = step_list_state.clone();
+                    let callback = callback.clone();
+                    match create_step(vec![step]).await {
+                        Ok(api_response) => match api_response {
+                            ApiResponse::ApiError(msg) => {
+                                error!("error: {}", msg)
+                            }
+                            ApiResponse::ApiMessage(msg) => {
+                                // appending values to cloned vec![]
+                                cloned_step_list.push(Step {
+                                    id: None,
+                                    recipe_id,
+                                    step_name: name.value(),
+                                    step_instruction: step_instruction.value(),
+                                    step_duration_min: step_duration_min
+                                        .value()
+                                        .parse::<i32>()
+                                        .unwrap(),
+                                });
+                                // setting cloned local vec as the current list_state
+                                callback.emit(cloned_step_list.clone());
+                                step_list_state.set(cloned_step_list);
+                                info!("{:?}", msg);
+                            }
+                            _ => {}
+                        },
+                        Err(err) => {
+                            error!("{:?}", err);
+                        }
+                    }
+                });
+            }
         })
     };
 

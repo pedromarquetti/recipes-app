@@ -1,4 +1,4 @@
-use db::structs::{FullRecipe, Ingredient, Recipe};
+use db::structs::{FullRecipe, Ingredient, Recipe, Step};
 use gloo_net::{http::Request, Error as GlooError};
 use serde_json::Value;
 
@@ -51,6 +51,15 @@ pub async fn create_ingredient(
 ) -> Result<ApiResponse<Ingredient, String>, GlooError> {
     let req = Request::post("/api/create/ingredient")
         .json(&ingredient)?
+        .send()
+        .await?;
+    let res: Value = req.json().await?;
+    parse_api_response(res).await
+}
+
+pub async fn create_step(step: Vec<Step>) -> Result<ApiResponse<Step, String>, GlooError> {
+    let req = Request::post("/api/create/step")
+        .json(&step)?
         .send()
         .await?;
     let res: Value = req.json().await?;
