@@ -27,6 +27,8 @@ pub async fn create_recipe(
     if let Some(claims) = user_claims {
         // set user_id
         recipe.set_user_id(claims.user_id)
+    } else {
+        return Err(Error::user_error("User not logged in", StatusCode::UNAUTHORIZED).into());
     }
 
     Ok(warp::reply::json(
@@ -48,7 +50,7 @@ pub async fn delete_recipe(
 
     let recipe = query_full_recipe(&mut conn, &incoming_query).map_err(convert_to_rejection)?;
 
-    if validate_permission(recipe, user_claims) {
+    if validate_permission(recipe.recipe.user_id, user_claims) {
         delete_recipe_query(conn, &incoming_query).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(&json!({"msg":"recipe deleted"})));
     } else {
@@ -104,7 +106,7 @@ pub async fn update_recipe(
     )
     .map_err(convert_to_rejection)?;
 
-    if validate_permission(recipe, user_claims) {
+    if validate_permission(recipe.recipe.user_id, user_claims) {
         update_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(&json!({"msg":"recipe updated!"})));
     } else {

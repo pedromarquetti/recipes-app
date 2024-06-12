@@ -33,7 +33,7 @@ pub async fn create_step(
     )
     .map_err(convert_to_rejection)?;
 
-    if validate_permission(recipe, user_claims) {
+    if validate_permission(recipe.recipe.user_id, user_claims) {
         create_recipe_step_query(conn, &recipe_steps).map_err(convert_to_rejection)?;
 
         return Ok(warp::reply::json(&json!({
@@ -63,7 +63,7 @@ pub async fn update_step(
         },
     )
     .map_err(convert_to_rejection)?;
-    if validate_permission(recipe, user_claims) {
+    if validate_permission(recipe.recipe.user_id, user_claims) {
         update_step_query(conn, &recipe_step).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(
             &json!({"msg":format!("step {} modified",recipe_step.step_name)}),
@@ -91,7 +91,7 @@ pub async fn delete_step(
         },
     )
     .map_err(convert_to_rejection)?;
-    if validate_permission(recipe, user_claims) {
+    if validate_permission(recipe.recipe.user_id, user_claims) {
         delete_recipe_step_query(conn, &incoming_query).map_err(convert_to_rejection)?;
 
         return Ok(warp::reply::json(&json!({

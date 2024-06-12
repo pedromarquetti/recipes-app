@@ -31,7 +31,7 @@ pub async fn create_ingredient(
     )
     .map_err(convert_to_rejection)?;
 
-    if validate_permission(recipe, claims) {
+    if validate_permission(recipe.recipe.user_id, claims) {
         create_recipe_ingredient_query(conn, &ingredients).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(
             &json!({"msg":format!("created {} ingredients",ingredients.len())}),
@@ -63,7 +63,7 @@ pub async fn update_ingredient(
     )
     .map_err(convert_to_rejection)?;
 
-    if validate_permission(recipe, claims) {
+    if validate_permission(recipe.recipe.user_id, claims) {
         update_ingredient_query(conn, &ingredient).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(
             &json!({"msg":format!("Ingredient {} deleted",ingredient.ingredient_name)}),
@@ -92,7 +92,7 @@ pub async fn delete_ingredient(
         },
     )
     .map_err(convert_to_rejection)?;
-    if validate_permission(recipe, claims) {
+    if validate_permission(recipe.recipe.user_id, claims) {
         delete_recipe_ingredient_query(conn, &incoming_ingredient).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(
             &json!({"msg":format!("Ingredient {} deleted",incoming_ingredient.ingredient_name)}),

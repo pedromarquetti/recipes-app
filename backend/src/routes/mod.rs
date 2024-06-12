@@ -182,25 +182,18 @@ pub async fn ping() -> Result<impl Reply, Rejection> {
 }
 
 /// checks if current user can create/read/update/delete item
-pub fn validate_permission(recipe: FullRecipe, claims: Option<UserClaims>) -> bool {
-    if let Some(user_id) = &recipe.recipe.user_id {
+pub fn validate_permission(user_id: Option<i32>, claims: Option<UserClaims>) -> bool {
+    if let Some(user_id) = user_id {
         // recipe has owner
         if claims.is_none() || user_id.ne(&claims.unwrap().user_id) {
-            // no login token found OR no matchva
+            // no login token found OR no matching user id
             return false;
         } else {
             // user owns recipe
             return true;
         }
     } else {
-        // recipe has no owner
-        if let Some(claims) = claims {
-            if claims.role.eq(&UserRole::Admin) {
-                // admins can edit any recipe
-                return true;
-            }
-        }
-        // no token found
+        // no id found
         return false;
     }
 }
