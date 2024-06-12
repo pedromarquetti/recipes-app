@@ -17,7 +17,7 @@ pub fn recipe_component(RecipeProps { full_recipe }: &RecipeProps) -> Html {
     let steps = full_recipe.steps.clone();
     html! {
         <div class="recipe">
-            <RecipeTitle owner={recipe.user_id} title={recipe.recipe_name}/>
+            <RecipeTitle owner={full_recipe.recipe_owner_name.clone()} title={recipe.recipe_name}/>
             <IngredientList ingredients={
                     ingredients
                 }/>
@@ -46,12 +46,12 @@ pub fn step_list(steps: &StepListProps) -> Html {
         .collect();
 
     html! {
-    <div class="steps-list">
+    <>
         <h2 >{"Steps"}</h2>
-        <ol>
+        <ol class="list">
             {l}
         </ol>
-    </div>
+    </>
     }
 }
 
