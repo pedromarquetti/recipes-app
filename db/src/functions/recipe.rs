@@ -10,6 +10,8 @@ use crate::{
     structs::{FullRecipe, Recipe, Step},
 };
 
+use super::user::get_user_name;
+
 pub fn create_recipe_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &Recipe,
@@ -54,6 +56,7 @@ pub fn query_full_recipe(
             .get_result(conn)?;
         full_recipe.set_recipe(query_recipe);
     }
+    full_recipe.set_owner_name(get_user_name(conn, full_recipe.recipe.user_id.unwrap())?);
 
     let query_steps: Vec<Step> = step_dsl::recipe_step
         .filter(step_dsl::recipe_id.eq(full_recipe.recipe.id.unwrap()))

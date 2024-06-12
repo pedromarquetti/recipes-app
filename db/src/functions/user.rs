@@ -6,6 +6,13 @@ use crate::{
     structs::User,
 };
 
+pub fn get_user_name(conn: &mut PooledPgConnection, user_id: i32) -> Result<String, DieselError> {
+    Ok(user_dsl::recipe_users
+        .select(user_dsl::user_name)
+        .filter(user_dsl::id.eq(user_id))
+        .first::<String>(conn)?)
+}
+
 pub fn create_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(), DieselError> {
     use crate::schema::recipe_users;
     diesel::insert_into(recipe_users::table)

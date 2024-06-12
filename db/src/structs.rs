@@ -1,6 +1,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
-use std::{fmt::Debug, io::{  Error as IOError, Write}};
+use std::{
+    fmt::Debug,
+    io::{Error as IOError, Write},
+};
 
 use diesel::{
     deserialize::{FromSql, FromSqlRow},
@@ -11,10 +14,7 @@ use diesel::{
     sql_types::Text,
 };
 
-use serde::{
-    Deserialize, Serialize,
-
-};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 /// This struct represents possible Ok Values the API can generate
@@ -51,8 +51,7 @@ impl Default for Step {
     }
 }
 impl Step {
- 
-    pub fn set_recipe_id(&mut self,id:i32){
+    pub fn set_recipe_id(&mut self, id: i32) {
         self.recipe_id = id
     }
 }
@@ -63,7 +62,7 @@ impl Step {
     Selectable,AsChangeset,
     Identifiable,
     Associations,
-    Insertable,),
+    Insertable),
     diesel(table_name = recipe_ingredient),
     diesel(belongs_to(Recipe))
 )]
@@ -86,8 +85,7 @@ impl Default for Ingredient {
     }
 }
 impl Ingredient {
-
-    pub fn set_recipe_id(&mut self,id:i32){
+    pub fn set_recipe_id(&mut self, id: i32) {
         self.recipe_id = id
     }
 }
@@ -117,7 +115,6 @@ impl Default for Recipe {
     }
 }
 impl Recipe {
-
     /// Change recipe name
     pub fn set_name<S>(&mut self, name: S)
     where
@@ -125,10 +122,10 @@ impl Recipe {
     {
         self.recipe_name = name.into();
     }
-    pub fn set_id(&mut self, recipe_id:i32 ) {
+    pub fn set_id(&mut self, recipe_id: i32) {
         self.id = Some(recipe_id)
     }
-    pub fn set_user_id(&mut self, user_id:i32 ) {
+    pub fn set_user_id(&mut self, user_id: i32) {
         self.user_id = Some(user_id)
     }
 
@@ -137,19 +134,16 @@ impl Recipe {
     }
 }
 
-
 pub trait RecipeTrait {}
 impl RecipeTrait for FullRecipe {}
 impl RecipeTrait for Recipe {}
 impl RecipeTrait for Ingredient {}
 impl RecipeTrait for Step {}
 
-
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct UrlRecipeQuery {
-    pub id:Option<i32>,
-    pub name:Option<String>,
-    
+    pub id: Option<i32>,
+    pub name: Option<String>,
 }
 
 impl Default for UrlRecipeQuery {
@@ -168,6 +162,7 @@ pub struct FullRecipe {
     pub recipe: Recipe,
     pub ingredients: Vec<Ingredient>,
     pub steps: Vec<Step>,
+    pub recipe_owner_name: String,
 }
 impl Default for FullRecipe {
     fn default() -> Self {
@@ -175,12 +170,12 @@ impl Default for FullRecipe {
             recipe: Recipe::default(),
             ingredients: vec![Ingredient::default()],
             steps: vec![Step::default()],
+            recipe_owner_name: String::new(),
         }
     }
 }
 
 impl FullRecipe {
-
     /// modify Recipe inside FullRecipe
     pub fn set_recipe(&mut self, recipe: Recipe) {
         self.recipe = recipe
@@ -193,16 +188,15 @@ impl FullRecipe {
     pub fn set_steps(&mut self, steps: Vec<Step>) {
         self.steps = steps
     }
+    pub fn set_owner_name(&mut self, name: String) {
+        self.recipe_owner_name = name
+    }
 }
 
 // #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[derive(Deserialize, Clone, Debug, Copy, PartialEq, Eq, Serialize)]
 #[cfg_attr(not(target_arch = "wasm32"), 
-    derive(
-        
-        FromSqlRow,
-        AsExpression
-    ),
+    derive(FromSqlRow,AsExpression),
     diesel(sql_type = Text)
 )]
 #[serde(rename_all = "lowercase")]
@@ -221,11 +215,8 @@ impl ToSql<Text, Pg> for UserRole {
             UserRole::User => {
                 // self.to_sql(out)
                 out.write(b"user")?
-                
             }
-            UserRole::Admin => {
-                out.write(b"admin")?                
-            }
+            UserRole::Admin => out.write(b"admin")?,
         };
         Ok(IsNull::No)
     }
@@ -250,8 +241,7 @@ impl FromSql<Text, Pg> for UserRole {
     }
 }
 
-
-#[derive(Deserialize, Serialize,Clone, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[cfg_attr(not(target_arch="wasm32"), 
     // derive( Queryable, Selectable, Insertable, Identifiable),
     derive(
@@ -292,10 +282,9 @@ impl User {
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
-pub struct UrlUserQuery {       
-    pub id:  Option<i32>,
-    pub name:Option<String>,
-    
+pub struct UrlUserQuery {
+    pub id: Option<i32>,
+    pub name: Option<String>,
 }
 
 impl Default for UrlUserQuery {
