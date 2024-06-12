@@ -23,14 +23,20 @@ pub struct ApiOkResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[cfg_attr(not(target_arch="wasm32"), 
-    derive(Queryable,
-    Selectable,AsChangeset,
-    Identifiable,
-    Associations,
-    Insertable,),
+#[cfg_attr(
+    not(target_arch = "wasm32"),
+    derive(
+        Queryable,
+        Selectable,
+        AsChangeset,
+        Identifiable,
+        Associations,
+        Insertable,
+    )
+)]
+#[cfg_attr(not(target_arch = "wasm32"), 
+    diesel(belongs_to(Recipe)),
     diesel(table_name = recipe_step),
-    diesel(belongs_to(Recipe))
 )]
 pub struct Step {
     pub id: Option<i32>,
@@ -57,14 +63,20 @@ impl Step {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(
+    not(target_arch = "wasm32"),
+    derive(
+        Queryable,
+        Selectable,
+        AsChangeset,
+        Identifiable,
+        Associations,
+        Insertable
+    )
+)]
 #[cfg_attr(not(target_arch="wasm32"), 
-    derive(Queryable,
-    Selectable,AsChangeset,
-    Identifiable,
-    Associations,
-    Insertable),
+    diesel(belongs_to(Recipe)),
     diesel(table_name = recipe_ingredient),
-    diesel(belongs_to(Recipe))
 )]
 pub struct Ingredient {
     pub id: Option<i32>,
@@ -93,8 +105,18 @@ impl Ingredient {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 // configuring attributes
 // if target_arch (architeture the code is being compiled in) is wasm32, ignore these (diesel stuff)
+#[cfg_attr(
+    not(target_arch = "wasm32"),
+    derive(
+        AsChangeset,
+        Queryable,
+        Selectable,
+        Associations,
+        Insertable,
+        Identifiable,
+    )
+)]
 #[cfg_attr(not(target_arch = "wasm32"), 
-    derive(AsChangeset,Queryable,Selectable,Associations,Insertable,Identifiable,),
     diesel(belongs_to(User)),
     diesel(table_name = recipe),
 )]
@@ -193,12 +215,10 @@ impl FullRecipe {
     }
 }
 
-// #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[derive(Deserialize, Clone, Debug, Copy, PartialEq, Eq, Serialize)]
-#[cfg_attr(not(target_arch = "wasm32"), 
-    derive(FromSqlRow,AsExpression),
-    diesel(sql_type = Text)
-)]
+#[cfg_attr(not(target_arch = "wasm32"), derive(FromSqlRow, AsExpression))]
+#[cfg_attr(not(target_arch = "wasm32"), diesel(sql_type = Text))
+]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
     User,
@@ -227,17 +247,11 @@ impl FromSql<Text, Pg> for UserRole {
     fn from_sql(
         bytes: <Pg as diesel::backend::Backend>::RawValue<'_>,
     ) -> diesel::deserialize::Result<Self> {
-        let s = String::from_sql(bytes)?;
-        match s.as_str() {
-            "user" => Ok(UserRole::User),
-            "admin" => Ok(UserRole::Admin),
+        match bytes.as_bytes() {
+            b"user" => Ok(UserRole::User),
+            b"admin" => Ok(UserRole::Admin),
             x => Err(format!("unknown variant: {:?},", x).into()),
         }
-        // match bytes.as_bytes() {
-        //     b"guest" => Ok(UserRole::Guest),
-        //     b"admin" => Ok(UserRole::Admin),
-        //     x => Err(format!("unknown variant: {:?},", x).into()),
-        // }
     }
 }
 
@@ -251,6 +265,8 @@ impl FromSql<Text, Pg> for UserRole {
         Insertable,
         Identifiable,
     ),
+)]
+#[cfg_attr(not(target_arch="wasm32"), 
     diesel(table_name = recipe_users)
 )]
 pub struct User {
