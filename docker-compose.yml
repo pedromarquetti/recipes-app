@@ -1,0 +1,55 @@
+services:
+  db:
+    networks:
+      - backend-network
+    container_name: recipe-db
+    build:
+      context: .
+      dockerfile: db/Dockerfile
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+
+    command: ["-p", "${HOST_DB_PORT}"]
+    ports:
+      - ${HOST_DB_PORT}:${HOST_DB_PORT}
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  backend:
+    networks:
+      - backend-network
+      - frontend-network
+    container_name: recipe-backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      - db
+    environment:
+      - SERVER_IP=${SERVER_IP}
+      - SERVER_PORT=${SERVER_PORT}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@db:$HOST_DB_PORT
+      - DEV_ENV=${DEV_ENV}
+
+    ports:
+      - ${HOST_API_PORT}:${SERVER_PORT}
+
+  frontend:
+    container_name: recipe-frontend
+    networks:
+      - frontend-network
+    depends_on:
+      - backend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      - TRUNK_SERVE_PROXY_BACKEND=http://backend:$SERVER_PORT/api
+    ports:
+      - ${FRONTEND_PORT}:8000
+
+networks:
+  backend-network:
+  frontend-network:

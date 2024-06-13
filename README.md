@@ -17,10 +17,15 @@ This is still a work in progress, since i'm learning Rust/Yew/Warp/Diesel as I c
 
 ### .env file
 
-1. Create .env file `echo "DATABASE_URL=postgresql://dev:dev@localhost:5432" >> .env`
+1. Create .env file
 
-> Note: The postgresql://... URI might be different
-> `echo JWT_SECRET_KEY="secret" >> .env`
+   `echo "DATABASE_URL=postgresql://dev:dev@localhost:5432" >> .env`
+
+   `echo JWT_SECRET_KEY=secret >> .env`
+
+   > Note: there's now an example .env file that can be used
+
+   > Note: The postgresql://... URI might be different
 
 ### Autoreload with [systemfd](https://github.com/mitsuhiko/systemfd) for the backend
 
@@ -35,17 +40,24 @@ The frontend uses [Trunk](https://github.com/trunk-rs/trunk), that auto-reloads 
 
 1. cargo install trunk
 
-## Running
+## Running with Docker
+
+Now there's a docker-compose file ready to be ran, simply run docker-compose up after setting up the .env file (example env file supplied).
+
+Both the front and backend will be exposed.
+
+> Note: The default behaviour of the backend is to provide unsafe HTTP requests and cookies, set the DEV_ENV variable to false so the JWToken is set as Secure.
+
+## Running manually
 
 In the future I'll implement a Docker setup for easier deployment, for now, run
 
 1. Frontend:
 
-   - `trunk serve`
+   - `TRUNK_SERVE_PROXY_BACKEND=<backend server:port/api> trunk serve`
 
      - Note:
-
-       The frontend will proxy API requests to the `proxy backend` defined in Trunk.toml, and will panic if the server is not available.
+       TRUNK_SERVE_PROXY_BACKEND env. variable is necessary because Trunk.toml [[proxy]] wasn't working well with Docker
 
        If you want to change the default proxy (defaults to localhost), pass do `trunk serve --proxy-backend <backend URL>`.
 
