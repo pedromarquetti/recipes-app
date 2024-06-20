@@ -5,16 +5,18 @@ use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
-use crate::functions::recipe_functions::{create_ingredient, create_step, delete_recipe};
-use crate::functions::{recipe_functions::create_recipe, ApiResponse};
-
-use crate::views::Route;
-
-use crate::components::{
-    input_component::{Input, InputType},
-    recipe_component::{IngredientList, RecipeComponent, StepList},
+use crate::{
+    components::{
+        input_component::{Input, InputType},
+        recipe_component::{IngredientList, RecipeComponent, StepList},
+    },
+    functions::{
+        recipe_functions::{create_ingredient, create_recipe, create_step, delete_recipe},
+        ApiResponse,
+    },
+    views::Route,
+    DEFAULT_NOTIFICATION_DURATION,
 };
-use crate::DEFAULT_NOTIFICATION_DURATION;
 
 use yew_notifications::{use_notification, Notification};
 
@@ -182,31 +184,61 @@ pub fn new_recipe() -> Html {
                 <NewIngredients callback={ingredient_callback} recipe_id={id}/>
                 <NewSteps callback={step_callback} recipe_id={id}/>
 
-                <h6>
-                        {format!("Note: when done, just click Home or go to")}
-                        <Link<Route> to={Route::Recipe {id:recipe_state.recipe.id.unwrap_or(1)}}>{
-                            format!("recipe {}",recipe_state.recipe.recipe_name)}
-                            </Link<Route>>
-                        <button onclick={Callback::from(move |_|{
-                            let recipe_state = recipe_state.clone();
-                            spawn_local(async move {
-                                match delete_recipe(recipe_state.recipe.clone()).await {
-                                    Ok(msg)=>{
-                                        info!("{:?}",msg);
-                                        recipe_state.set(FullRecipe::default())
-                                    },
-                                    Err(err)=>error!("{:?}",err)
+    <h6>
+            {format!("Note: when done, just click Home or go to")}
+            <Link<Route> to={Route::Recipe {id:recipe_state.recipe.id.unwrap_or(1)}}>{
+                format!("recipe {}",recipe_state.recipe.recipe_name)}
+                </Link<Route>>
 
-                                };
-                            });
+    <button
+    onclick={
+    Callback::from(
+    move |_|{
+        let recipe_state = recipe_state.clone();
+        let use_notification = use_notification.clone();
 
-                        })}>{"cancel"}</button>
+    spawn_local(async move {
+        match delete_recipe(recipe_state.recipe.clone()).await {
+            Ok(ok_fetch)=>{
+                match ok_fetch{
+                    ApiResponse::ApiError(err)=>{
+                        error!("API error: {:?}", err);
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err,
+                            DEFAULT_NOTIFICATION_DURATION,
+                            ));
+                        },
+                    ApiResponse::ApiMessage(msg) => {
+                        info!("API message: {:?}", msg);
+                        use_notification.spawn(Notification::new(
+                        yew_notifications::NotificationType::Info,
+                        "Sucess",
+                        msg,
+                        DEFAULT_NOTIFICATION_DURATION,
+                        ));
+            },
+            _ => {} // this is a placeholder
+                }}
+                Err(err)=>{
+                    use_notification.spawn(Notification::new(
+                    yew_notifications::NotificationType::Error,
+                    "Error!",
+                    err.to_string(),
+                    DEFAULT_NOTIFICATION_DURATION,
+                ));
 
-                    </h6>
-                </>
-            }
-        } else {html!()}
-        }
+                }
+            };
+        });
+    })}>{"cancel"}</button>
+
+        </h6>
+    </>
+    }
+    } else {html!()}
+    }
 
     </>
     }

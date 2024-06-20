@@ -20,7 +20,7 @@ use crate::{
 };
 use db::{
     db_pool::Pool,
-    structs::{FullRecipe, Ingredient, Step, UrlRecipeQuery, UrlUserQuery, UserRole},
+    structs::{Ingredient, Step, UrlRecipeQuery, UrlUserQuery},
 };
 use serde_json::json;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
