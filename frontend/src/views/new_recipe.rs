@@ -25,6 +25,7 @@ use yew_notifications::{use_notification, Notification};
 pub fn new_recipe() -> Html {
     let use_notification = use_notification::<Notification>();
     let recipe_state = use_state(|| FullRecipe::default());
+    let navigator = use_navigator().unwrap();
 
     let recipe_name_ref = use_node_ref();
 
@@ -196,6 +197,7 @@ pub fn new_recipe() -> Html {
     move |_|{
         let recipe_state = recipe_state.clone();
         let use_notification = use_notification.clone();
+        let navigator = navigator.clone();
 
     spawn_local(async move {
         match delete_recipe(recipe_state.recipe.clone()).await {
@@ -217,10 +219,13 @@ pub fn new_recipe() -> Html {
                         "Sucess",
                         msg,
                         DEFAULT_NOTIFICATION_DURATION,
-                        ));
+
+                    ));
+                            navigator.push(&Route::Home);
+
             },
             _ => {} // this is a placeholder
-                }}
+        }}
                 Err(err)=>{
                     use_notification.spawn(Notification::new(
                     yew_notifications::NotificationType::Error,
@@ -228,7 +233,6 @@ pub fn new_recipe() -> Html {
                     err.to_string(),
                     DEFAULT_NOTIFICATION_DURATION,
                 ));
-
                 }
             };
         });
