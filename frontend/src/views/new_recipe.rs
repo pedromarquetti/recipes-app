@@ -14,15 +14,14 @@ use crate::components::{
     input_component::{Input, InputType},
     recipe_component::{IngredientList, RecipeComponent, StepList},
 };
+use crate::DEFAULT_NOTIFICATION_DURATION;
 
-// use time::Duration;
-// use yew_notifications::{
-//     use_notification, Notification, NotificationFactory, NotificationType, NotificationsPosition,
-// };
+use yew_notifications::{use_notification, Notification};
 
 #[function_component(NewRecipe)]
 /// Handles recipe creation
 pub fn new_recipe() -> Html {
+    let use_notification = use_notification::<Notification>();
     let recipe_state = use_state(|| FullRecipe::default());
 
     let recipe_name_ref = use_node_ref();
@@ -64,6 +63,7 @@ pub fn new_recipe() -> Html {
     // on submit CallBack handler
     // this handles creating a new Recipe
     let onsubmit = {
+        let use_notification = use_notification.clone();
         // cloning here so these variables can be used inside this block*
         let recipe_name = recipe_name_ref.clone();
 
@@ -71,6 +71,7 @@ pub fn new_recipe() -> Html {
         let recipe_state = recipe_state.clone();
 
         Callback::from(move |e: SubmitEvent| {
+            let use_notification = use_notification.clone();
             let recipe_state = recipe_state.clone();
 
             // *necessary because of this 'move'
@@ -96,28 +97,45 @@ pub fn new_recipe() -> Html {
                     Ok(api_response) => match api_response {
                         ApiResponse::OkRecipe(ok_recipe) => {
                             info!("recipe created! {:?}", ok_recipe);
-                            full_recipe.set_recipe(ok_recipe);
-                            recipe_state.set(full_recipe)
+                            full_recipe.set_recipe(ok_recipe.clone());
+                            recipe_state.set(full_recipe);
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Info,
+                                "Recipe created!",
+                                format!("recipe { } created! ", ok_recipe.recipe_name),
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
                         }
                         ApiResponse::ApiError(msg) => {
-                            error!("error: {}", msg)
+                            error!("error: {}", msg);
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Error,
+                                "Error!",
+                                msg,
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
                         }
                         ApiResponse::ApiMessage(msg) => {
-                            info!("{:?}", msg)
+                            info!("{:?}", msg);
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Info,
+                                "",
+                                msg,
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
                         }
                     },
                     Err(err) => {
                         error!("{:?}", err);
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
                     }
                 }
             });
-
-            // notifications_manager.spawn(Notification::new(
-            //     NotificationType::Info,
-            //     "New recipe",
-            //     format!("name: {} obs ' {} '", name, obs),
-            //     Duration::seconds(2),
-            // ))
             name.set_value("")
         })
     };
@@ -207,6 +225,7 @@ pub struct RecipePartProps<T: std::cmp::PartialEq> {
 ///
 /// Handles form inputs+changes
 pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
+    let use_notification = use_notification::<Notification>();
     let ingredient_list_state: UseStateHandle<Vec<Ingredient>> = use_state(|| vec![]);
     let recipe_id = props.recipe_id;
 
@@ -227,6 +246,7 @@ pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
         let callback = props.callback.clone();
 
         Callback::from(move |event: SubmitEvent| {
+            let use_notification = use_notification.clone();
             let callback = callback.clone();
             let ingredient_list_state = ingredient_list_state.clone();
             // they have to be cloned because of the 'move' inside the closure
@@ -251,10 +271,18 @@ pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
             {
                 let ingredient = ingredient.clone();
                 spawn_local(async move {
+                    let use_notification = use_notification.clone();
+
                     match create_ingredient(vec![ingredient.clone()]).await {
                         Ok(api_response) => match api_response {
                             ApiResponse::ApiError(msg) => {
-                                error!("error: {}", msg)
+                                error!("error: {}", msg);
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Error,
+                                    "Error!",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
                             }
                             ApiResponse::ApiMessage(msg) => {
                                 info!("{:?}", msg);
@@ -266,11 +294,23 @@ pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
 
                                 // setting ingredient list state
                                 ingredient_list_state.set(cloned_ingredient_list.clone());
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Info,
+                                    "Sucess",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
                             }
                             _ => {}
                         },
                         Err(err) => {
                             error!("{:?}", err);
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Error,
+                                "Error!",
+                                err.to_string(),
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
                         }
                     }
                 });
@@ -323,6 +363,7 @@ pub fn new_ingredient(props: &RecipePartProps<Vec<Ingredient>>) -> Html {
 
 #[function_component(NewSteps)]
 pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
+    let use_notification = use_notification::<Notification>();
     let step_list_state: UseStateHandle<Vec<Step>> = use_state(|| vec![]);
     let callback = props.callback.clone();
     let recipe_id = props.recipe_id;
@@ -342,6 +383,7 @@ pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
         let step_list_state = step_list_state.clone();
 
         Callback::from(move |event: SubmitEvent| {
+            let use_notification = use_notification.clone();
             let step_list_state = step_list_state.clone();
 
             // they have to be cloned because of the 'move' inside the closure
@@ -368,12 +410,20 @@ pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
                 };
 
                 spawn_local(async move {
+                    let use_notification = use_notification.clone();
+
                     let step_list_state = step_list_state.clone();
                     let callback = callback.clone();
                     match create_step(vec![step]).await {
                         Ok(api_response) => match api_response {
                             ApiResponse::ApiError(msg) => {
-                                error!("error: {}", msg)
+                                error!("error: {}", msg);
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Error,
+                                    "Error!",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
                             }
                             ApiResponse::ApiMessage(msg) => {
                                 // appending values to cloned vec![]
@@ -391,11 +441,24 @@ pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
                                 callback.emit(cloned_step_list.clone());
                                 step_list_state.set(cloned_step_list);
                                 info!("{:?}", msg);
+
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Info,
+                                    "Success!",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
                             }
                             _ => {}
                         },
                         Err(err) => {
                             error!("{:?}", err);
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Error,
+                                "Error!",
+                                err.to_string(),
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
                         }
                     }
                 });

@@ -1,0 +1,28 @@
+.notifications {
+	position: fixed;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5em;
+	font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+		"Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+}
+
+.notifications-provider-bottom-right {
+	right: 2em;
+	bottom: 2em;
+}
+
+.notifications-provider-top-right {
+	right: 2em;
+	top: 2em;
+}
+
+.notifications-provider-bottom-left {
+	left: 2em;
+	bottom: 2em;
+}
+
+.notifications-provider-top-left {
+	left: 2em;
+	top: 2em;
+}

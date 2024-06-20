@@ -3,12 +3,10 @@ use yew::{platform::spawn_local, prelude::*};
 
 use crate::{
     components::recipe_card_component::RecipeCard, functions::recipe_functions::fuzzy_list_recipe,
+    DEFAULT_NOTIFICATION_DURATION,
 };
 
-// use time::Duration;
-// use yew_notifications::{
-//     use_notification, Notification, NotificationFactory, NotificationType, NotificationsPosition,
-// };
+use yew_notifications::{use_notification, Notification};
 
 #[derive(Properties, PartialEq)]
 pub struct RecipeListProps {
@@ -24,20 +22,26 @@ pub struct RecipeListProps {
 pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
     let name = recipe_name.clone();
     let recipe_state = use_state(|| vec![]);
-    let fetch_msg = use_state(|| String::new());
 
-    // let notifications_manager = use_notification::<Notification>();
+    let use_notification = use_notification::<Notification>();
 
     {
         let recipe_state = recipe_state.clone();
         use_effect_with(recipe_state.clone(), move |_| {
             spawn_local(async move {
+                let use_notification = use_notification.clone();
                 match fuzzy_list_recipe(name).await {
                     Ok(ok_recipes) => {
                         recipe_state.set(ok_recipes);
                     }
                     Err(err) => {
                         error!("err {}", err.to_string());
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
                     }
                 }
             });

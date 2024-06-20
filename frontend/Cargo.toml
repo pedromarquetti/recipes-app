@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yew = { version = "0.21.0", features = ["csr"] }
+yew = { version = "0.21", features = ["csr"] }
 yew-router = "0.18.0"
 gloo-net = {version = "0.4.0",features = ["http","json"]}
 serde = { version = "1", features = ["derive"] }
@@ -16,7 +16,6 @@ log = "0.4"
 # fix for "wasm*-unknown-unknown targets are not supported by default"
 getrandom = { version = "0.2", features = ["js"] }
 db = { version = "*",path = "../db"}
-web-sys = {version = "0.3.64",features = ["HtmlInputElement"]}
-
+web-sys = {version = "0.3"}
 yew-notifications = { git = "https://github.com/TheBestTvarynka/yew-notifications.git", features = ["standard-notification"] }
-time = { version = "0.3.20", features = ["local-offset", "wasm-bindgen"] }
+time = { version = "0.3", features = ["local-offset", "wasm-bindgen"] }
