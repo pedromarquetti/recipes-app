@@ -113,3 +113,31 @@ pub async fn update_recipe(
         return Err(Error::user_error("Cannot update recipe", StatusCode::UNAUTHORIZED).into());
     }
 }
+
+pub async fn check_edit_permission(
+    incoming_query: UrlRecipeQuery,
+    user_claims: Option<UserClaims>,
+    db_connection: DbConnection,
+) -> Result<impl Reply, Rejection> {
+    if incoming_query.id.is_none() {
+        return Err(Error::payload_error("Insert a recipe name!").into());
+    }
+    let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
+
+    // querying recipe so we can validate ownership
+    let recipe = query_full_recipe(
+        &mut conn,
+        &UrlRecipeQuery {
+            id: incoming_query.id,
+            name: None,
+        },
+    )
+    // returns error if no recipe is found
+    .map_err(convert_to_rejection)?;
+
+    if validate_permission(recipe.recipe.user_id, user_claims) {
+        return Ok(warp::reply::json(&json!({"msg":"user can edit recipe!"})));
+    } else {
+        return Err(Error::user_error("Cannot edit recipe", StatusCode::UNAUTHORIZED).into());
+    }
+}

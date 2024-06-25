@@ -22,6 +22,7 @@ use db::{
     db_pool::Pool,
     structs::{Ingredient, Step, UrlRecipeQuery, UrlUserQuery},
 };
+use recipe_route::check_edit_permission;
 use serde_json::json;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
@@ -73,6 +74,12 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(auth())
         .and(pool_filter.clone())
         .and_then(update_recipe);
+    let check_permission = warp::get()
+        .and(path!("api" / "get" / "permission"))
+        .and(warp::query::<UrlRecipeQuery>())
+        .and(auth())
+        .and(pool_filter.clone())
+        .and_then(check_edit_permission);
 
     //  step endpoints
     let create_recipe_step = warp::post()
@@ -161,6 +168,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .or(update_recipe)
         .or(delete_recipe)
         .or(view_recipe)
+        .or(check_permission)
         .or(fuzzy_query);
     let recipe_step_endpoints = create_recipe_step
         .or(update_recipe_step)

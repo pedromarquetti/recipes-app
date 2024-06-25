@@ -1,7 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     io::{Error as IOError, Write},
 };
 
@@ -14,7 +14,10 @@ use diesel::{
     sql_types::Text,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{DeserializeOwned, DeserializeSeed},
+    Deserialize, Serialize,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 /// This struct represents possible Ok Values the API can generate
@@ -196,7 +199,6 @@ impl Default for FullRecipe {
         }
     }
 }
-
 impl FullRecipe {
     /// modify Recipe inside FullRecipe
     pub fn set_recipe(&mut self, recipe: Recipe) {
