@@ -15,8 +15,8 @@ use yew_router::prelude::*;
 const DEFAULT_NOTIFICATION_DURATION: time::Duration = time::Duration::seconds(2);
 
 /// Main App function
-#[function_component]
-fn App() -> Html {
+#[function_component(App)]
+fn app() -> Html {
     let component_creator = NotificationFactory;
 
     html! {

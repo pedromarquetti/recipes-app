@@ -37,6 +37,16 @@ pub async fn create_recipe(recipe: Recipe) -> Result<ApiResponse<Recipe, String>
     parse_api_response(res).await
 }
 
+pub async fn check_edit_permission(
+    recipe_id: i32,
+) -> Result<ApiResponse<Recipe, String>, GlooError> {
+    let req = Request::get(&format!("/api/get/permission/?id={recipe_id}"))
+        .send()
+        .await?;
+    let res = req.json().await?;
+    parse_api_response(res).await
+}
+
 pub async fn delete_recipe(recipe: Recipe) -> Result<ApiResponse<FullRecipe, String>, GlooError> {
     let req = Request::get(&format!(
         "/api/delete/recipe/?id={}",
