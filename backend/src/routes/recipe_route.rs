@@ -52,7 +52,10 @@ pub async fn delete_recipe(
 
     if validate_permission(recipe.recipe.user_id, user_claims) {
         delete_recipe_query(conn, &incoming_query).map_err(convert_to_rejection)?;
-        return Ok(warp::reply::json(&json!({"msg":"recipe deleted"})));
+        return Ok(warp::reply::json(
+            &json!({"msg":format!("recipe {} deleted", recipe.recipe.recipe_name)
+            }),
+        ));
     } else {
         return Err(Error::user_error("Recipe cannot be deleted", StatusCode::FORBIDDEN).into());
     }
@@ -120,7 +123,7 @@ pub async fn check_edit_permission(
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
     if incoming_query.id.is_none() {
-        return Err(Error::payload_error("Insert a recipe name!").into());
+        return Err(Error::payload_error("Insert a recipe id!").into());
     }
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 

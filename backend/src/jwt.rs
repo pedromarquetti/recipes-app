@@ -11,11 +11,20 @@ fn get_secret() -> String {
     return env::var("JWT_SECRET_KEY").expect("JWT_SECRET_KEY not found!");
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct UserClaims {
     pub user_id: i32,
     pub role: UserRole,
     pub exp: usize,
+}
+impl Default for UserClaims {
+    fn default() -> Self {
+        Self {
+            user_id: -1,
+            role: UserRole::User,
+            exp: Default::default(),
+        }
+    }
 }
 
 pub fn generate_token(user: User) -> Result<String, JWTError> {
