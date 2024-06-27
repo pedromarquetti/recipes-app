@@ -200,6 +200,16 @@ impl Default for FullRecipe {
     }
 }
 impl FullRecipe {
+    /// creates new FullRecipe with Recipe id
+    pub fn new_with_id(id: i32) -> Self {
+        Self {
+            recipe: Recipe {
+                id: Some(id),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
     /// modify Recipe inside FullRecipe
     pub fn set_recipe(&mut self, recipe: Recipe) {
         self.recipe = recipe

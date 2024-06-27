@@ -1,4 +1,6 @@
+pub mod edit_ingredients;
 pub mod edit_mode;
+pub mod edit_steps;
 pub mod ingredient_component;
 pub mod input_component;
 pub mod navbar_component;
