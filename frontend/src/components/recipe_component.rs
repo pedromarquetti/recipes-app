@@ -1,8 +1,15 @@
 use db::structs::{FullRecipe, Ingredient, Step};
-use yew::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
+use yew_notifications::{use_notification, Notification};
+use yew_router::hooks::use_navigator;
 
-use crate::components::{
-    ingredient_component::IngredientItem, recipe_title::RecipeTitle, steps_component::StepItem,
+use crate::{
+    components::{
+        edit_mode::EditRecipe, ingredient_component::IngredientItem, recipe_title::RecipeTitle,
+        steps_component::StepItem,
+    },
+    functions::{recipe_functions::check_edit_permission, ApiResponse},
+    DEFAULT_NOTIFICATION_DURATION,
 };
 
 #[derive(Properties, PartialEq)]
@@ -12,17 +19,84 @@ pub struct RecipeProps {
 #[function_component(RecipeComponent)]
 /// Base Recipe component
 pub fn recipe_component(RecipeProps { full_recipe }: &RecipeProps) -> Html {
-    let recipe = full_recipe.recipe.clone();
-    let ingredients = full_recipe.ingredients.clone();
-    let steps = full_recipe.steps.clone();
-    html! {
+    let recipe_state = use_state(|| full_recipe.clone());
+    let use_notification = use_notification::<Notification>();
+    let recipe = recipe_state.recipe.clone();
+    let ingredients = recipe_state.ingredients.clone();
+    let steps = recipe_state.steps.clone();
+
+    let edit_mode = use_state(|| false);
+
+    let onclick = {
+        let edit_mode = edit_mode.clone();
+        Callback::from(move |_| {
+            let edit_mode = edit_mode.clone();
+            let use_notification = use_notification.clone();
+            spawn_local(async move {
+                match check_edit_permission(recipe.id.unwrap_or(-1)).await {
+                    Ok(ok_fetch) => match ok_fetch {
+                        ApiResponse::ApiError(err) => {
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Error,
+                                "Error!",
+                                err,
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
+                        }
+                        ApiResponse::ApiMessage(_) => {
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Info,
+                                "Edit Mode",
+                                "",
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
+                            edit_mode.set(true);
+                        }
+                        _ => {}
+                    },
+                    Err(err) => {
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
+                    }
+                }
+            });
+        })
+    };
+
+    html! {<>
         <div class="recipe">
+            <button {onclick}>{"Edit recipe"}</button>
             <RecipeTitle owner={full_recipe.recipe_owner_name.clone()} title={recipe.recipe_name}/>
             <IngredientList ingredients={
-                    ingredients
-                }/>
+                ingredients
+            }/>
             <StepList step_list={steps}/>
         </div>
+
+    {
+    if *edit_mode {
+        html! {
+            <EditRecipe
+            full_recipe={full_recipe.clone()}
+            edited_recipe={
+                Callback::from(move |edited_recipe|{
+                    let recipe_state = recipe_state.clone();
+                    recipe_state.set(edited_recipe);
+                })
+            }
+            close={Callback::from(move|_| {
+                edit_mode.set(false);
+            })}/>
+        }
+    } else {
+        html! {}
+    }
+    }
+    </>
     }
 }
 

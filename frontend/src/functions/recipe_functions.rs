@@ -50,7 +50,7 @@ pub async fn check_edit_permission(
 pub async fn delete_recipe(recipe: Recipe) -> Result<ApiResponse<FullRecipe, String>, GlooError> {
     let req = Request::get(&format!(
         "/api/delete/recipe/?id={}",
-        recipe.id.unwrap_or(0)
+        recipe.id.unwrap_or(-1)
     ))
     .send()
     .await?;
