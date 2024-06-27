@@ -33,7 +33,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
             spawn_local(async move {
                 let use_notification = use_notification.clone();
 
-                match fetch_recipe(recipe_id).await {
+                match fetch_recipe(&recipe_id).await {
                     Ok(ok_fetch) => match ok_fetch {
                         ApiResponse::OkRecipe(ok_recipe) => {
                             recipe_state.set(ok_recipe);

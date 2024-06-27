@@ -33,7 +33,7 @@ pub fn recipe_component(RecipeProps { full_recipe }: &RecipeProps) -> Html {
             let edit_mode = edit_mode.clone();
             let use_notification = use_notification.clone();
             spawn_local(async move {
-                match check_edit_permission(recipe.id.unwrap_or(-1)).await {
+                match check_edit_permission(&recipe.id.unwrap_or(-1)).await {
                     Ok(ok_fetch) => match ok_fetch {
                         ApiResponse::ApiError(err) => {
                             use_notification.spawn(Notification::new(
@@ -44,12 +44,6 @@ pub fn recipe_component(RecipeProps { full_recipe }: &RecipeProps) -> Html {
                             ));
                         }
                         ApiResponse::ApiMessage(_) => {
-                            use_notification.spawn(Notification::new(
-                                yew_notifications::NotificationType::Info,
-                                "Edit Mode",
-                                "",
-                                DEFAULT_NOTIFICATION_DURATION,
-                            ));
                             edit_mode.set(true);
                         }
                         _ => {}

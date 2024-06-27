@@ -30,7 +30,7 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
         use_effect_with(recipe_state.clone(), move |_| {
             spawn_local(async move {
                 let use_notification = use_notification.clone();
-                match fuzzy_list_recipe(name).await {
+                match fuzzy_list_recipe(&name).await {
                     Ok(ok_recipes) => {
                         recipe_state.set(ok_recipes);
                     }

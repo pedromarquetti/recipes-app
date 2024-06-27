@@ -69,7 +69,7 @@ pub fn new_recipe_step(props: &RecipePartProps<Vec<Step>>) -> Html {
 
                     let step_list_state = step_list_state.clone();
                     let callback = callback.clone();
-                    match create_step(vec![step]).await {
+                    match create_step(vec![&step]).await {
                         Ok(api_response) => match api_response {
                             ApiResponse::ApiError(msg) => {
                                 error!("error: {}", msg);

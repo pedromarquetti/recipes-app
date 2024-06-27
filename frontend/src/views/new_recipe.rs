@@ -98,7 +98,7 @@ pub fn new_recipe() -> Html {
 
             // making request to API backend
             spawn_local(async move {
-                match create_recipe(recipe).await {
+                match create_recipe(&recipe).await {
                     Ok(api_response) => match api_response {
                         ApiResponse::OkRecipe(ok_recipe) => {
                             info!("recipe created! {:?}", ok_recipe);
@@ -202,7 +202,7 @@ pub fn new_recipe() -> Html {
         let navigator = navigator.clone();
 
     spawn_local(async move {
-        match delete_recipe(recipe_state.recipe.clone()).await {
+        match delete_recipe(&recipe_state.recipe.id).await {
             Ok(ok_fetch)=>{
                 match ok_fetch{
                     ApiResponse::ApiError(err)=>{
