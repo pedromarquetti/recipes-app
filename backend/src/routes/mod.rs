@@ -22,7 +22,6 @@ use db::{
     db_pool::Pool,
     structs::{Ingredient, Step, UrlRecipeQuery, UrlUserQuery, UserRole},
 };
-use log::debug;
 use recipe_route::check_edit_permission;
 use serde_json::json;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};

@@ -172,14 +172,16 @@ impl From<DieselError> for Error {
     fn from(value: DieselError) -> Self {
         match value {
             DieselError::DatabaseError(kind, msg) => match kind {
-                DatabaseErrorKind::UniqueViolation => Error::unique_violation(msg.message()),
+                DatabaseErrorKind::UniqueViolation => {
+                    Error::unique_violation("Inserted value must be unique")
+                }
                 // other errors
                 DatabaseErrorKind::ForeignKeyViolation => {
                     Error::db_error(format!("Foreign Key violation! {}", msg.message(),))
                 }
-                _ => Error::db_error(msg.message()),
+                _ => Error::db_error(format!("Unexpected error!: {}", msg.message())),
             },
-            err => Error::db_error(err.to_string()),
+            err => Error::db_error(format!("Unexpected error! {}", err.to_string())),
         }
     }
 }
