@@ -11,13 +11,11 @@ pub mod recipe_component;
 pub mod recipe_title;
 pub mod steps_component;
 
+use db::structs::RecipeTrait;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-/// # TODO
-///
-/// put this elsewhere to be used globally...
-pub struct RecipePartProps<T: PartialEq> {
+pub struct RecipePartProps<T: PartialEq + RecipeTrait> {
     pub recipe_id: i32,
     #[prop_or_default]
     pub callback: Callback<T>,

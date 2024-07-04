@@ -164,6 +164,7 @@ impl RecipeTrait for FullRecipe {}
 impl RecipeTrait for Recipe {}
 impl RecipeTrait for Ingredient {}
 impl RecipeTrait for Step {}
+impl<T> RecipeTrait for Vec<T> {}
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct UrlRecipeQuery {
