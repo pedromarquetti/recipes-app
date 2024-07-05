@@ -20,11 +20,10 @@ pub fn create_recipe_step_query(
 pub fn delete_recipe_step_query(
     mut conn: PooledPgConnection,
     step: &Step,
-) -> Result<(), DieselError> {
-    diesel::delete(step_dsl::recipe_step)
+) -> Result<usize, DieselError> {
+    Ok(diesel::delete(step_dsl::recipe_step)
         .filter(step_dsl::id.eq(step.id.unwrap()))
-        .execute(&mut conn)?;
-    Ok(())
+        .execute(&mut conn)?)
 }
 
 /// # DB crate

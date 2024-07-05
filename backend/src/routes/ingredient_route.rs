@@ -7,6 +7,7 @@ use db::{
     functions::{recipe::query_full_recipe, recipe_ingredient::*},
     structs::{Ingredient, Recipe, UrlRecipeQuery},
 };
+use log::debug;
 use serde_json::json;
 use warp::{http::StatusCode, Rejection, Reply};
 
@@ -74,11 +75,11 @@ pub async fn update_ingredient(
 
 /// Backend ingredient delete endpoint function
 pub async fn delete_ingredient(
-    incoming_ingredient: Ingredient,
+    ingredient: Ingredient,
     claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    if incoming_ingredient.id.is_none() {
+    if ingredient.id.is_none() {
         return Err(Error::payload_error("missing ID field").into());
     }
 
@@ -87,15 +88,19 @@ pub async fn delete_ingredient(
     let recipe = query_full_recipe(
         &mut conn,
         &UrlRecipeQuery {
-            id: Some(incoming_ingredient.recipe_id),
+            id: Some(ingredient.recipe_id),
             name: None,
         },
     )
     .map_err(convert_to_rejection)?;
+
     if validate_permission(recipe.recipe.user_id, claims) {
-        delete_recipe_ingredient_query(conn, &incoming_ingredient).map_err(convert_to_rejection)?;
+        if delete_recipe_ingredient_query(conn, &ingredient).map_err(convert_to_rejection)? == 0 {
+            return Err(Error::not_found("Ingredient not found").into());
+        }
+
         return Ok(warp::reply::json(
-            &json!({"msg":format!("Ingredient {} deleted",incoming_ingredient.ingredient_name)}),
+            &json!({"msg":format!("Ingredient {} deleted",ingredient.ingredient_name)}),
         ));
     }
     return Err(Error::user_error("Cannot delete ingredient!", StatusCode::FORBIDDEN).into());

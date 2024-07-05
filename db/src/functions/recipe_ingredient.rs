@@ -18,11 +18,10 @@ pub fn create_recipe_ingredient_query(
 pub fn delete_recipe_ingredient_query(
     mut conn: PooledPgConnection,
     ingredient: &Ingredient,
-) -> Result<(), DieselError> {
-    diesel::delete(ingredient_dsl::recipe_ingredient)
+) -> Result<usize, DieselError> {
+    Ok(diesel::delete(ingredient_dsl::recipe_ingredient)
         .filter(ingredient_dsl::id.eq(ingredient.id.expect("unexpected error!")))
-        .execute(&mut conn)?;
-    Ok(())
+        .execute(&mut conn)?)
 }
 
 /// Ingredient DB function responsible for updating an ingredient's details
