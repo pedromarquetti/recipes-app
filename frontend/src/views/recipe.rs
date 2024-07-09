@@ -4,7 +4,7 @@ use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
 
 use crate::{
-    components::recipe_component::RecipeComponent,
+    components::recipe_component::{RecipeComponent, RecipeComponentMode},
     functions::{recipe_functions::fetch_recipe, ApiResponse},
     DEFAULT_NOTIFICATION_DURATION,
 };
@@ -12,6 +12,8 @@ use crate::{
 #[derive(Properties, PartialEq)]
 pub struct RecipeProps {
     pub recipe_id: i32,
+    #[prop_or(RecipeComponentMode::View)]
+    pub mode: RecipeComponentMode,
 }
 
 #[function_component(RecipePage)]
@@ -25,59 +27,71 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     // same as:
     // const [recipe,setRecipe] = useState(recipe)
     let recipe_state = use_state(|| FullRecipe::default());
-
     {
         let recipe_state = recipe_state.clone();
-        use_effect_with((), move |_| {
-            let recipe_state = recipe_state.clone();
-            spawn_local(async move {
-                let use_notification = use_notification.clone();
+        use_effect_with(props.mode.clone(), move |mode| {
+            if let RecipeComponentMode::View = mode {
+                let recipe_state = recipe_state.clone();
+                spawn_local(async move {
+                    let use_notification = use_notification.clone();
 
-                match fetch_recipe(&recipe_id).await {
-                    Ok(ok_fetch) => match ok_fetch {
-                        ApiResponse::OkRecipe(ok_recipe) => {
-                            recipe_state.set(ok_recipe);
-                            info!("recipe fetch ok!");
-                        }
-                        ApiResponse::ApiError(err) => {
-                            error!("{:?}", err);
+                    match fetch_recipe(&recipe_id).await {
+                        Ok(ok_fetch) => match ok_fetch {
+                            ApiResponse::OkRecipe(ok_recipe) => {
+                                recipe_state.set(ok_recipe);
+                                info!("recipe fetch ok!");
+                            }
+                            ApiResponse::ApiError(err) => {
+                                error!("{:?}", err);
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Error,
+                                    "Error!",
+                                    err,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
+                            }
+                            ApiResponse::ApiMessage(msg) => {
+                                info!("{:?}", msg);
+                            }
+                        },
+                        Err(err) => {
+                            error!("{}", err);
                             use_notification.spawn(Notification::new(
                                 yew_notifications::NotificationType::Error,
                                 "Error!",
-                                err,
+                                err.to_string(),
                                 DEFAULT_NOTIFICATION_DURATION,
                             ));
                         }
-                        ApiResponse::ApiMessage(msg) => {
-                            info!("{:?}", msg);
-                        }
-                    },
-                    Err(err) => {
-                        error!("{}", err);
-                        use_notification.spawn(Notification::new(
-                            yew_notifications::NotificationType::Error,
-                            "Error!",
-                            err.to_string(),
-                            DEFAULT_NOTIFICATION_DURATION,
-                        ));
                     }
-                }
-            });
+                });
+            }
         });
     }
 
-    if recipe_state.recipe.id.is_some() {
-        html! {
-            <>
-                <RecipeComponent full_recipe={(*recipe_state).clone()}/>
-            </>
-        }
-    } else {
-        html! {
-        <>
-        <h1>{"No recipe with this id!"}</h1>
+    match props.mode {
+        RecipeComponentMode::View => {
+            if recipe_state.recipe.id.is_some() {
+                html! {
+                    <>
+                        <RecipeComponent mode={RecipeComponentMode::View} full_recipe={(*recipe_state).clone()}/>
+                    </>
+                }
+            } else {
+                html! {
+                <>
+                <h1>{"No recipe with this id!"}</h1>
 
-        </>
+                </>
+                }
+            }
+        }
+        RecipeComponentMode::New => {
+            html! {<RecipeComponent full_recipe={FullRecipe::default()} mode={RecipeComponentMode::New}/>}
+        }
+        _ => {
+            // omitting Edit mode
+            html! {}
         }
     }
 }

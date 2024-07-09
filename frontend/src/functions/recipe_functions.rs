@@ -1,8 +1,5 @@
 use db::structs::{FullRecipe, Ingredient, Recipe, Step};
-use gloo_net::{
-    http::{Method, Request},
-    Error as GlooError,
-};
+use gloo_net::{http::Request, Error as GlooError};
 use serde_json::Value;
 
 use super::{parse_api_response, ApiResponse};
@@ -59,6 +56,27 @@ pub async fn delete_recipe(
     ))
     .send()
     .await?;
+    let res: Value = req.json().await?;
+    parse_api_response(res).await
+}
+
+pub async fn delete_step(step: &Step) -> Result<ApiResponse<Step, String>, GlooError> {
+    let req = Request::post("/api/delete/step")
+        // sending step to API
+        .json(step)?
+        .send()
+        .await?;
+    let res: Value = req.json().await?;
+    parse_api_response(res).await
+}
+
+pub async fn delete_ingredient(
+    ingredient: &Ingredient,
+) -> Result<ApiResponse<Ingredient, String>, GlooError> {
+    let req = Request::post("/api/delete/ingredient")
+        .json(ingredient)?
+        .send()
+        .await?;
     let res: Value = req.json().await?;
     parse_api_response(res).await
 }

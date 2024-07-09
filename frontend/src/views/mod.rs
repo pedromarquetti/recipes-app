@@ -19,7 +19,7 @@ use self::{
     recipe_list::RecipeList,
     register::UserRegister,
 };
-use crate::views::new_recipe::NewRecipe;
+use crate::components::recipe_component::RecipeComponentMode;
 
 /// # Routes enum
 ///
@@ -64,7 +64,7 @@ pub fn switch(route: Route) -> Html {
         }
         Route::Recipe { id } => {
             html! {
-            <RecipePage recipe_id={id}/>
+            <RecipePage mode={RecipeComponentMode::View} recipe_id={id}/>
             }
         }
         Route::UserPage => {
@@ -75,7 +75,7 @@ pub fn switch(route: Route) -> Html {
 
         Route::NewRecipe => {
             html! {
-                <NewRecipe/>
+                <RecipePage recipe_id={-1} mode={RecipeComponentMode::New}/>
             }
         }
     }

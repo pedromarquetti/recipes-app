@@ -15,8 +15,11 @@ use db::structs::RecipeTrait;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-pub struct RecipePartProps<T: PartialEq + RecipeTrait> {
+pub struct RecipePartProps<T: PartialEq + RecipeTrait + Default> {
     pub recipe_id: i32,
     #[prop_or_default]
     pub callback: Callback<T>,
+    #[prop_or_default]
+    /// old Recipe/Ingredient/Step...
+    pub old_part: T,
 }

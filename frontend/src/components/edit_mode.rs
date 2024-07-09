@@ -1,5 +1,9 @@
 use crate::{
-    components::input_component::{Input, InputType},
+    components::{
+        edit_ingredients::EditIngredient,
+        edit_steps::EditStep,
+        input_component::{Input, InputType},
+    },
     functions::{
         recipe_functions::{delete_recipe, update_recipe},
         ApiResponse,
@@ -11,7 +15,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use db::structs::{FullRecipe, Ingredient, Recipe};
+use db::structs::{FullRecipe, Ingredient, Recipe, Step};
 use log::{debug, error, info};
 use yew::platform::spawn_local;
 use yew_notifications::{use_notification, Notification};
@@ -43,7 +47,6 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         use_effect_with(state.clone(), move |full_recipe_state| {
             let state = (*full_recipe_state).clone();
             let edited_recipe = edited_recipe.clone();
-
             edited_recipe.emit((*state).clone())
         });
     }
@@ -56,6 +59,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
 
     let close = close.clone();
 
+    // handle recipe rename
     let rename = {
         let recipe_state = recipe_state.clone();
         let use_notification = use_notification.clone();
@@ -127,7 +131,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
     };
 
     html! {
-    <div class="container recipe">
+    <div class="recipe">
         <h1>{format!("Editing recipe {}",recipe.recipe_name)}</h1>
         <div class="edit-container">
         <form onsubmit={rename}>
@@ -140,7 +144,42 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
                     />
             <button >{"Rename"}</button>
         </form>
+        <EditStep
+        edited_steps={{
+            let recipe_state = recipe_state.clone();
 
+            Callback::from(move |steps:Vec<Step>|{
+                let recipe_state = recipe_state.clone();
+                recipe_state.set(
+                    FullRecipe {
+                        steps,
+                        ..(*recipe_state).clone()
+                    }
+                );
+
+            })
+        }}
+        old_steps={old_recipe.steps.clone()}
+        recipe_id={old_recipe.clone().recipe.id.unwrap()}
+        />
+
+        <EditIngredient
+        recipe_id={old_recipe.clone().recipe.id.unwrap()}
+        old_ingredients={old_recipe.ingredients.clone()}
+        callback={
+            Callback::from(move |ingredient:Ingredient|{
+                let recipe_state = recipe_state.clone();
+                let mut ingredients = (*recipe_state).clone().ingredients;
+                ingredients.push(ingredient);
+                recipe_state.set(
+                    FullRecipe {
+                        ingredients,
+                        ..(*recipe_state).clone()
+                    }
+                );
+            })
+        }
+        />
         </div>
         <div class="edit-actions">
             // delete recipe
@@ -189,7 +228,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
                 })
             }
             >{"Delete recipe"}</button>
-
+            // close edit mode button
             <button onclick={move |_|{
             let close = close.clone();
             close.emit(())

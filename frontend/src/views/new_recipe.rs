@@ -10,7 +10,6 @@ use crate::{
         input_component::{Input, InputType},
         new_ingredient::NewIngredients,
         new_step::NewSteps,
-        recipe_component::RecipeComponent,
     },
     functions::{
         recipe_functions::{create_recipe, delete_recipe},
@@ -22,46 +21,71 @@ use crate::{
 
 use yew_notifications::{use_notification, Notification};
 
+#[derive(Properties, Clone, PartialEq)]
+pub struct NewRecipeProps {
+    /// old recipe
+    pub full_recipe: FullRecipe,
+    /// handler for sending edited recipe to parent component
+    pub new_recipe_cb: Callback<FullRecipe>,
+}
+
 #[function_component(NewRecipe)]
 /// Handles recipe creation
-pub fn new_recipe() -> Html {
+pub fn new_recipe(props: &NewRecipeProps) -> Html {
+    let NewRecipeProps {
+        full_recipe,
+        new_recipe_cb,
+    } = props;
     let use_notification = use_notification::<Notification>();
-    let recipe_state = use_state(|| FullRecipe::default());
+    let recipe_state = use_state(|| full_recipe.clone());
     let navigator = use_navigator().unwrap();
+    {
+        let state = recipe_state.clone();
+        let new_recipe_cb = new_recipe_cb.clone();
+        // detects changes in recipe_state and sends a cb.emit()
+        use_effect_with(state.clone(), move |full_recipe_state| {
+            let state = (*full_recipe_state).clone();
+            let edited_recipe = new_recipe_cb.clone();
+            edited_recipe.emit((*state).clone())
+        });
+    }
 
     let recipe_name_ref = use_node_ref();
 
-    // <Ingredient> Callback handler
-    let ingredient_callback: Callback<Vec<Ingredient>> = {
+    // `<Ingredient/>` Callback handler
+    let ingredient_callback: Callback<Ingredient> = {
         // making a copy of the current recipe_state
         let recipe_state = recipe_state.clone();
-        Callback::from(move |received_ingredients| {
+        Callback::from(move |ingredient| {
             let recipe_state = recipe_state.clone();
             // local full_recipe (w/o UseStateHandle)
-            let mut full_recipe = (*recipe_state).clone();
-
-            // setting ingredients for the local recipe
-            full_recipe.set_ingredients(received_ingredients);
-
+            let full_recipe = (*recipe_state).clone();
+            let mut ingredients = full_recipe.ingredients;
+            ingredients.push(ingredient);
             // updating local recipe_state with the local ingredients
-            recipe_state.set(full_recipe);
+            recipe_state.set(FullRecipe {
+                ingredients,
+                ..(*recipe_state).clone()
+            });
         })
     };
 
     // <Step> Callback handler
-    let step_callback: Callback<Vec<Step>> = {
+    let step_callback: Callback<Step> = {
         let recipe_state = recipe_state.clone();
-        Callback::from(move |received_steps| {
+        Callback::from(move |step| {
             let recipe_state = recipe_state.clone();
 
             // local full_recipe (w/o UseStateHandle)
-            let mut full_recipe = (*recipe_state).clone();
+            let full_recipe = (*recipe_state).clone();
+            let mut steps = full_recipe.steps.clone();
+            steps.push(step);
 
-            // setting ingredients for the local recipe
-            full_recipe.set_steps(received_steps);
-
-            // updating local recipe_state with the local ingredients
-            recipe_state.set(full_recipe);
+            // updating local recipe_state with the local steps
+            recipe_state.set(FullRecipe {
+                steps,
+                ..(*recipe_state).clone()
+            });
         })
     };
 
@@ -149,32 +173,20 @@ pub fn new_recipe() -> Html {
     <>
         <h1>{"New Recipe"}</h1>
         {
-            if !recipe_state.recipe.id.is_none() {
-                html! {
-                    <>
-                        <RecipeComponent full_recipe={(*recipe_state).clone()}/>
-                    </>
-
-                }
-            } else {html!()}
-
-        }
-
-        {
         // only show new recipe form if recipe_state is_none()
-            if recipe_state.recipe.id.is_none() {
-            html! {
-            <form {onsubmit} class="new-recipe">
-                <Input
-                    input_node_ref={recipe_name_ref.clone()}
-                    input_placeholder="Recipe name"
-                    input_name="recipe name"
-                    is_required={true}
-                    input_type={InputType::Text}/>
-                <button >{"Create recipe"}</button>
-            </form>
-            }
-            } else {html! {}}
+        if recipe_state.recipe.id.is_none() {
+        html! {
+        <form {onsubmit} class="new-recipe">
+            <Input
+                input_node_ref={recipe_name_ref.clone()}
+                input_placeholder="Recipe name"
+                input_name="recipe name"
+                is_required={true}
+                input_type={InputType::Text}/>
+            <button >{"Create recipe"}</button>
+        </form>
+        }
+        } else {html! {}}
         }
 
         {
@@ -184,7 +196,9 @@ pub fn new_recipe() -> Html {
 
             html! {
                 <>
+                <h1>{"New ingredient"}</h1>
                 <NewIngredients callback={ingredient_callback} recipe_id={id}/>
+                <h1>{"New Step"}</h1>
                 <NewSteps callback={step_callback} recipe_id={id}/>
 
     <h6>
@@ -193,6 +207,7 @@ pub fn new_recipe() -> Html {
                 format!("recipe {}",recipe_state.recipe.recipe_name)}
                 </Link<Route>>
 
+    // TODO! add confirmation for deleting recipe
     <button
     onclick={
     Callback::from(

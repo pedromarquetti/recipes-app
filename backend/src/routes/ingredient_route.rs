@@ -7,7 +7,6 @@ use db::{
     functions::{recipe::query_full_recipe, recipe_ingredient::*},
     structs::{Ingredient, Recipe, UrlRecipeQuery},
 };
-use log::debug;
 use serde_json::json;
 use warp::{http::StatusCode, Rejection, Reply};
 

@@ -1,7 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
 use std::{
-    fmt::{Debug, Display},
+    fmt::Debug,
     io::{Error as IOError, Write},
 };
 
@@ -14,10 +14,7 @@ use diesel::{
     sql_types::Text,
 };
 
-use serde::{
-    de::{DeserializeOwned, DeserializeSeed},
-    Deserialize, Serialize,
-};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 /// This struct represents possible Ok Values the API can generate
