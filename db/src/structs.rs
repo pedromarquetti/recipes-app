@@ -194,8 +194,8 @@ impl Default for FullRecipe {
     fn default() -> Self {
         FullRecipe {
             recipe: Recipe::default(),
-            ingredients: vec![Ingredient::default()],
-            steps: vec![Step::default()],
+            ingredients: vec![],
+            steps: vec![],
             recipe_owner_name: String::new(),
         }
     }
