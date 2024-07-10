@@ -10,6 +10,7 @@ use crate::{
         input_component::{Input, InputType},
         new_ingredient::NewIngredients,
         new_step::NewSteps,
+        RecipeMode,
     },
     functions::{
         recipe_functions::{create_recipe, delete_recipe},
@@ -53,10 +54,10 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
     let recipe_name_ref = use_node_ref();
 
     // `<Ingredient/>` Callback handler
-    let ingredient_callback: Callback<Ingredient> = {
+    let ingredient_callback = {
         // making a copy of the current recipe_state
         let recipe_state = recipe_state.clone();
-        Callback::from(move |ingredient| {
+        Callback::from(move |(_, ingredient)| {
             let recipe_state = recipe_state.clone();
             // local full_recipe (w/o UseStateHandle)
             let full_recipe = (*recipe_state).clone();
@@ -71,9 +72,9 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
     };
 
     // <Step> Callback handler
-    let step_callback: Callback<Step> = {
+    let step_callback = {
         let recipe_state = recipe_state.clone();
-        Callback::from(move |step| {
+        Callback::from(move |(_, step)| {
             let recipe_state = recipe_state.clone();
 
             // local full_recipe (w/o UseStateHandle)
@@ -197,9 +198,26 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
             html! {
                 <>
                 <h1>{"New ingredient"}</h1>
-                <NewIngredients callback={ingredient_callback} recipe_id={id}/>
+                <NewIngredients
+                callback={ingredient_callback}
+                old_part={
+                    {
+                        Ingredient {
+                            recipe_id:(*recipe_state).clone().recipe.id.expect("expected valid recipe_id at new recipe part"),
+                            ..Default::default()
+                        }
+                    }
+                }
+                />
                 <h1>{"New Step"}</h1>
-                <NewSteps callback={step_callback} recipe_id={id}/>
+                <NewSteps
+                callback={step_callback}
+                old_part={
+                    Step{
+                        recipe_id:(*recipe_state).clone().recipe.id.unwrap(),
+                        ..Default::default()
+                    }
+                }/>
 
     <h6>
             {format!("Note: when done, just click Home or go to")}

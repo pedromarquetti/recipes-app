@@ -11,17 +11,13 @@ use crate::{views::new_recipe::NewRecipe,
     DEFAULT_NOTIFICATION_DURATION,
 };
 
+use super::RecipeMode;
+
 #[derive(Properties, PartialEq)]
 pub struct RecipeProps {
     pub full_recipe: FullRecipe,
-    #[prop_or(RecipeComponentMode::View)]
-    pub mode:RecipeComponentMode
-}
-#[derive(PartialEq,Clone,Debug)]
-pub enum RecipeComponentMode {
-    View,
-    Edit,
-    New
+    #[prop_or(RecipeMode::View)]
+    pub mode:RecipeMode
 }
 
 #[function_component(RecipeComponent)]
@@ -61,7 +57,7 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                         }
                         ApiResponse::ApiMessage(_) => {
                             edit_mode.set(true);
-                            mode_state.set(RecipeComponentMode::Edit);
+                            mode_state.set(RecipeMode::Edit);
 
                         }
                         _ => {}
@@ -82,24 +78,27 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
     html! {<>
         <div class="recipe">
         {
-            if RecipeComponentMode::View  == (*mode_state).clone()|| RecipeComponentMode::Edit  == (*mode_state).clone(){
+            if RecipeMode::View  == (*mode_state).clone()|| RecipeMode::Edit  == (*mode_state).clone(){
                 html!{<button {onclick}>{"Edit Recipe"}</button>}
             } else{html!{}}
         }
             <RecipeTitle owner={full_recipe.recipe_owner_name.clone()} title={recipe.recipe_name}/>
             <IngredientList 
-            curr_focus={
+            curr_focus={{
+                let ingredient_to_edit = ingredient_to_edit.clone();
                 Callback::from(move |i:Ingredient|{
                     ingredient_to_edit.set(i)
                 })
-            } 
+            }} 
             edit_mode={(*edit_mode).clone()} 
             ingredients={ingredients}/>
             
             <StepList 
-            curr_focus={Callback::from(move |s:Step|{
+            curr_focus={{
+                let step_to_edit = step_to_edit.clone();
+                Callback::from(move |s:Step|{
                 step_to_edit.set(s)
-            })}
+            })}}
             edit_mode={(*edit_mode).clone()}
             step_list={steps}
             />
@@ -107,10 +106,12 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
 
         {
         match *mode_state {
-            RecipeComponentMode::Edit=>{
+            RecipeMode::Edit=>{
                 html!{
                 <EditRecipe
                 full_recipe={full_recipe.clone()}
+                ingredient_to_edit={(*ingredient_to_edit).clone()}
+                step_to_edit={(*step_to_edit).clone()}
                 edited_recipe={
                     Callback::from(move |edited_recipe:FullRecipe|{
                         let recipe_state = recipe_state.clone();
@@ -120,11 +121,11 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                 close={
                     Callback::from(move|_| {
                         edit_mode.set(false);
-                        mode_state.set(RecipeComponentMode::View)
+                        mode_state.set(RecipeMode::View)
                     }
             )}/>}
         }
-            RecipeComponentMode::New=>{
+            RecipeMode::New=>{
                 html!{
                 <NewRecipe
                 full_recipe={full_recipe.clone()}
@@ -136,7 +137,7 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                 }
                 />
             }
-        },RecipeComponentMode::View=>{html!()}
+        },_=>{html!()}
         }}
 
 

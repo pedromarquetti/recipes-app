@@ -1,11 +1,14 @@
+use std::default;
+
 use crate::{
     components::{
         input_component::{Input, InputType},
         new_step::NewSteps,
         recipe_component::StepList,
+        RecipeMode,
     },
     functions::{
-        recipe_functions::{delete_recipe, update_recipe},
+        recipe_functions::{delete_recipe, update_recipe, update_steps},
         ApiResponse,
     },
     views::Route,
@@ -23,41 +26,153 @@ use yew_router::hooks::use_navigator;
 
 use super::RecipePartProps;
 
-#[derive(Properties, Clone, PartialEq)]
-pub struct EditStepProps {
-    /// old recipe
-    pub old_steps: Vec<Step>,
-    /// handler for sending edited recipe to parent component
-    pub edited_steps: Callback<Vec<Step>>,
-    pub recipe_id: i32,
-}
-
 #[function_component(EditStep)]
-pub fn edit_step(props: &EditStepProps) -> Html {
-    let EditStepProps {
+pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
+    let RecipePartProps {
+        callback,
+        old_part,
         recipe_id,
-        edited_steps,
-        old_steps,
     } = props;
     let add_step_state = use_state(|| false);
-    let old_steps = old_steps.clone();
-    let step_state = use_state(|| old_steps.clone());
+    let step_state = use_state(|| old_part.clone());
+    let use_notification = use_notification::<Notification>();
+
+    let step_name = use_node_ref();
+    let step_instruction = use_node_ref();
+    let step_duration_min = use_node_ref();
 
     {
-        //cloning current state
         let state = step_state.clone();
-        let edited_steps = edited_steps.clone();
-        // state will be used to emit Callback on change
-        use_effect_with(state.clone(), move |steps| {
-            let state = (*steps).clone();
-            let steps = edited_steps.clone();
-            // if step_state changes, send callback
-            steps.emit((*state).clone())
+        use_effect_with(old_part.clone(), move |i: &Step| {
+            // setting ingredient_state
+            state.set(i.clone())
         })
     }
 
+    // handling form submit (editing ingredient to list)
+    let onsubmit = {
+        let old_part = old_part.clone();
+        let callback = callback.clone();
+
+        // cloning node ref
+        let name_input = step_name.clone();
+        let step_instruction = step_instruction.clone();
+        let step_duration_min = step_duration_min.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            let callback = callback.clone();
+            event.prevent_default();
+
+            let use_notification = use_notification.clone();
+            // they have to be cloned because of the 'move' inside the closure
+
+            // "cloned" represents the "ingredient_list_state" vec![]
+            // it'll be used to push new values
+
+            // getting form input values...
+            let name = name_input.cast::<HtmlInputElement>().unwrap();
+            let step_instruction = step_instruction.cast::<HtmlInputElement>().unwrap();
+            let step_duration_min = step_duration_min.cast::<HtmlInputElement>().unwrap();
+
+            let step = Step {
+                id: None,
+                recipe_id: old_part.recipe_id,
+                step_name: name.value(),
+                step_instruction: step_instruction.value(),
+                step_duration_min: step_duration_min
+                    .value()
+                    .parse::<i32>()
+                    .map_err(|err| {
+                        let use_notification = use_notification.clone();
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
+                    })
+                    .unwrap_or(-1),
+            };
+            {
+                let step = step.clone();
+                spawn_local(async move {
+                    let use_notification = use_notification.clone();
+
+                    match update_steps(&step).await {
+                        Ok(api_response) => match api_response {
+                            ApiResponse::ApiError(msg) => {
+                                error!("error: {}", msg);
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Error,
+                                    "Error!",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
+                            }
+                            ApiResponse::ApiMessage(msg) => {
+                                callback.emit((RecipeMode::Edit, step));
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Info,
+                                    "Sucess",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
+                            }
+                            _ => {}
+                        },
+                        Err(err) => {
+                            error!("{:?}", err);
+                            use_notification.spawn(Notification::new(
+                                yew_notifications::NotificationType::Error,
+                                "Error!",
+                                err.to_string(),
+                                DEFAULT_NOTIFICATION_DURATION,
+                            ));
+                        }
+                    }
+                });
+            }
+        })
+    };
+
     html! {<>
     <h1>{"Edit Steps"}</h1>
+    {
+        if (*step_state).clone().id.is_some(){
+        html!{
+            <div class="new-ingredients">
+        <form {onsubmit}>
+            <Input
+                input_node_ref={step_name.clone()}
+                is_required={false}
+                input_placeholder={(*step_state).clone().step_name}
+                input_name="step name"
+                input_type={InputType::Text}
+            />
+            <Input
+                input_node_ref={step_instruction.clone()}
+                input_placeholder={(*step_state).clone().step_instruction}
+                is_required={false}
+                input_name="Step instruction"
+                input_type={InputType::Text}
+            />
+            <Input
+                input_node_ref={step_duration_min.clone()}
+                input_placeholder={format!("{}",(*step_state).clone().step_duration_min)}
+                input_name="duration"
+                is_required={false}
+                input_type={InputType::Number}
+            />
+            <button>{"New step"}</button>
+
+        </form>
+    </div>
+        }
+    }else{html!{}}
+    }
+
+
+
     {if !*add_step_state.clone() {
         html!{
             <button onclick={{let add_step_state=add_step_state.clone();Callback::from(move|_|{add_step_state.set(true)})}}>{"Add Steps"}</button>
@@ -68,16 +183,12 @@ pub fn edit_step(props: &EditStepProps) -> Html {
     {if *add_step_state.clone() {
         html!{<>
             <button onclick={{let add_step_state=add_step_state.clone();Callback::from(move|_|{add_step_state.set(false)})}}>{"Cancel Add Steps"}</button>
-            <NewSteps {recipe_id}
-            callback={
-                // handling new item creation
-                Callback::from(move |step:Step|{
-                    let mut old_steps = old_steps.clone();
-                    // appending newly created steps to old steps
-                    old_steps.push(step);
-                    // setting state (this will trigger use_effect)
-                    step_state.set(old_steps)
-            })}
+            <NewSteps
+            old_part={Step {
+                recipe_id:recipe_id.clone(),
+                ..Default::default()
+            }}
+            {callback}
             />
             </>
         }

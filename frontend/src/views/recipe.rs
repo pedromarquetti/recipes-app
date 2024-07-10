@@ -4,7 +4,7 @@ use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
 
 use crate::{
-    components::recipe_component::{RecipeComponent, RecipeComponentMode},
+    components::{recipe_component::RecipeComponent, RecipeMode},
     functions::{recipe_functions::fetch_recipe, ApiResponse},
     DEFAULT_NOTIFICATION_DURATION,
 };
@@ -12,8 +12,8 @@ use crate::{
 #[derive(Properties, PartialEq)]
 pub struct RecipeProps {
     pub recipe_id: i32,
-    #[prop_or(RecipeComponentMode::View)]
-    pub mode: RecipeComponentMode,
+    #[prop_or(RecipeMode::View)]
+    pub mode: RecipeMode,
 }
 
 #[function_component(RecipePage)]
@@ -30,7 +30,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     {
         let recipe_state = recipe_state.clone();
         use_effect_with(props.mode.clone(), move |mode| {
-            if let RecipeComponentMode::View = mode {
+            if let RecipeMode::View = mode {
                 let recipe_state = recipe_state.clone();
                 spawn_local(async move {
                     let use_notification = use_notification.clone();
@@ -70,11 +70,11 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
     }
 
     match props.mode {
-        RecipeComponentMode::View => {
+        RecipeMode::View => {
             if recipe_state.recipe.id.is_some() {
                 html! {
                     <>
-                        <RecipeComponent mode={RecipeComponentMode::View} full_recipe={(*recipe_state).clone()}/>
+                        <RecipeComponent mode={RecipeMode::View} full_recipe={(*recipe_state).clone()}/>
                     </>
                 }
             } else {
@@ -86,8 +86,8 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
                 }
             }
         }
-        RecipeComponentMode::New => {
-            html! {<RecipeComponent full_recipe={FullRecipe::default()} mode={RecipeComponentMode::New}/>}
+        RecipeMode::New => {
+            html! {<RecipeComponent full_recipe={FullRecipe::default()} mode={RecipeMode::New}/>}
         }
         _ => {
             // omitting Edit mode

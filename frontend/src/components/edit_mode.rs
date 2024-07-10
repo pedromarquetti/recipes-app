@@ -3,6 +3,7 @@ use crate::{
         edit_ingredients::EditIngredient,
         edit_steps::EditStep,
         input_component::{Input, InputType},
+        RecipeMode,
     },
     functions::{
         recipe_functions::{delete_recipe, update_recipe},
@@ -15,7 +16,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use db::structs::{FullRecipe, Ingredient, Recipe, Step};
+use db::structs::{FullRecipe, Ingredient, Recipe, RecipeTrait, Step};
 use log::{debug, error, info};
 use yew::platform::spawn_local;
 use yew_notifications::{use_notification, Notification};
@@ -28,6 +29,10 @@ pub struct EditRecipeProps {
     /// handler for sending edited recipe to parent component
     pub edited_recipe: Callback<FullRecipe>,
     pub close: Callback<()>,
+    #[prop_or_default]
+    pub ingredient_to_edit: Ingredient,
+    #[prop_or_default]
+    pub step_to_edit: Step,
 }
 
 #[function_component(EditRecipe)]
@@ -36,10 +41,12 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         full_recipe,
         close,
         edited_recipe,
+        step_to_edit,
+        ingredient_to_edit,
     } = props;
+
     let old_recipe = full_recipe.clone();
     let recipe_state = use_state(|| old_recipe.clone());
-
     {
         let state = recipe_state.clone();
         let edited_recipe = edited_recipe.clone();
@@ -50,6 +57,91 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
             edited_recipe.emit((*state).clone())
         });
     }
+
+    let step_cb: Callback<(RecipeMode, Step)> = {
+        let recipe_state = recipe_state.clone();
+        let use_notification = use_notification::<Notification>();
+
+        Callback::from(move |(mode, step)| match mode {
+            RecipeMode::New => {
+                let recipe_state = recipe_state.clone();
+                let full_recipe = (*recipe_state).clone();
+                let mut steps = full_recipe.steps;
+                steps.push(step);
+                recipe_state.set(FullRecipe {
+                    steps,
+                    ..(*recipe_state).clone()
+                });
+            }
+            RecipeMode::Edit => {
+                let use_notification = use_notification.clone();
+                let recipe_state = recipe_state.clone();
+                let mut recipe = (*recipe_state).clone();
+
+                let s = recipe.replace_steps(step);
+                match s {
+                    Ok(steps) => recipe_state.set(FullRecipe {
+                        steps,
+                        ..(*recipe_state).clone()
+                    }),
+                    Err(err) => {
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
+                    }
+                }
+            }
+            RecipeMode::Delete => {}
+            _ => {}
+        })
+    };
+    let ingredient_cb: Callback<(RecipeMode, Ingredient)> = {
+        let recipe_state = recipe_state.clone();
+        let use_notification = use_notification::<Notification>();
+
+        Callback::from(move |(mode, ingredient)| match mode {
+            RecipeMode::New => {
+                let recipe_state = recipe_state.clone();
+                // local full_recipe (w/o UseStateHandle)
+                let full_recipe = (*recipe_state).clone();
+                let mut ingredients = full_recipe.ingredients;
+                ingredients.push(ingredient);
+                // updating local recipe_state with the local ingredients
+                recipe_state.set(FullRecipe {
+                    ingredients,
+                    ..(*recipe_state).clone()
+                });
+            }
+            RecipeMode::Edit => {
+                let use_notification = use_notification.clone();
+                let recipe_state = recipe_state.clone();
+
+                let mut recipe = (*recipe_state).clone();
+                let ingredients = recipe.replace_ingredient(ingredient);
+                match ingredients {
+                    Ok(ingredient_list) => {
+                        recipe_state.set(FullRecipe {
+                            ingredients: ingredient_list,
+                            ..(*recipe_state).clone()
+                        });
+                    }
+                    Err(err) => {
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
+                    }
+                }
+            }
+            RecipeMode::Delete => {}
+            _ => {}
+        })
+    };
 
     let recipe = old_recipe.recipe.clone();
     let new_name_ref = use_node_ref();
@@ -135,6 +227,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         <h1>{format!("Editing recipe {}",recipe.recipe_name)}</h1>
         <div class="edit-container">
         <form onsubmit={rename}>
+
             <Input
                     input_node_ref={new_name_ref}
                     is_required={true}
@@ -144,42 +237,19 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
                     />
             <button >{"Rename"}</button>
         </form>
+
         <EditStep
-        edited_steps={{
-            let recipe_state = recipe_state.clone();
-
-            Callback::from(move |steps:Vec<Step>|{
-                let recipe_state = recipe_state.clone();
-                recipe_state.set(
-                    FullRecipe {
-                        steps,
-                        ..(*recipe_state).clone()
-                    }
-                );
-
-            })
-        }}
-        old_steps={old_recipe.steps.clone()}
-        recipe_id={old_recipe.clone().recipe.id.unwrap()}
+        recipe_id={recipe_state.clone().recipe.id.unwrap_or_default()}
+        callback={step_cb}
+        old_part={step_to_edit.clone()}
         />
 
         <EditIngredient
-        recipe_id={old_recipe.clone().recipe.id.unwrap()}
-        old_ingredients={old_recipe.ingredients.clone()}
-        callback={
-            Callback::from(move |ingredient:Ingredient|{
-                let recipe_state = recipe_state.clone();
-                let mut ingredients = (*recipe_state).clone().ingredients;
-                ingredients.push(ingredient);
-                recipe_state.set(
-                    FullRecipe {
-                        ingredients,
-                        ..(*recipe_state).clone()
-                    }
-                );
-            })
-        }
+        recipe_id={recipe_state.clone().recipe.id.unwrap_or_default()}
+        old_part={ingredient_to_edit.clone()}
+        callback={ingredient_cb}
         />
+
         </div>
         <div class="edit-actions">
             // delete recipe

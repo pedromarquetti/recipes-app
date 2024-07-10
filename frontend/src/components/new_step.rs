@@ -7,7 +7,7 @@ use yew::{platform::spawn_local, prelude::*};
 use crate::{
     components::{
         input_component::{Input, InputType},
-        RecipePartProps,
+        RecipeMode, RecipePartProps,
     },
     functions::{recipe_functions::create_step, ApiResponse},
     DEFAULT_NOTIFICATION_DURATION,
@@ -17,9 +17,13 @@ use yew_notifications::{use_notification, Notification};
 
 #[function_component(NewSteps)]
 pub fn new_recipe_step(props: &RecipePartProps<Step>) -> Html {
+    let RecipePartProps {
+        old_part,
+        recipe_id: _,
+        callback,
+    } = props;
     let use_notification = use_notification::<Notification>();
-    let callback = props.callback.clone();
-    let recipe_id = props.recipe_id;
+    let callback = callback.clone();
 
     let step_name = use_node_ref();
     let step_instruction = use_node_ref();
@@ -27,6 +31,7 @@ pub fn new_recipe_step(props: &RecipePartProps<Step>) -> Html {
 
     // handling form submit (adding new step to list)
     let onsubmit = {
+        let old_part = old_part.clone();
         // cloning node ref
         let name_input = step_name.clone();
         let step_instruction = step_instruction.clone();
@@ -48,7 +53,7 @@ pub fn new_recipe_step(props: &RecipePartProps<Step>) -> Html {
 
             let step = Step {
                 id: None,
-                recipe_id,
+                recipe_id: old_part.recipe_id,
                 step_name: name.value(),
                 step_instruction: step_instruction.value(),
                 step_duration_min: step_duration_min.value().parse::<i32>().unwrap(),
@@ -72,7 +77,7 @@ pub fn new_recipe_step(props: &RecipePartProps<Step>) -> Html {
                                 ));
                             }
                             ApiResponse::ApiMessage(msg) => {
-                                callback.emit(step);
+                                callback.emit((RecipeMode::New, step));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Success!",

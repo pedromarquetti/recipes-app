@@ -12,6 +12,8 @@ use user_page::UserPage;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+use crate::components::RecipeMode;
+
 use self::{
     error::{ErrorPage, ErrorType},
     home::Home,
@@ -19,7 +21,6 @@ use self::{
     recipe_list::RecipeList,
     register::UserRegister,
 };
-use crate::components::recipe_component::RecipeComponentMode;
 
 /// # Routes enum
 ///
@@ -64,7 +65,7 @@ pub fn switch(route: Route) -> Html {
         }
         Route::Recipe { id } => {
             html! {
-            <RecipePage mode={RecipeComponentMode::View} recipe_id={id}/>
+            <RecipePage mode={RecipeMode::View} recipe_id={id}/>
             }
         }
         Route::UserPage => {
@@ -75,7 +76,7 @@ pub fn switch(route: Route) -> Html {
 
         Route::NewRecipe => {
             html! {
-                <RecipePage recipe_id={-1} mode={RecipeComponentMode::New}/>
+                <RecipePage recipe_id={-1} mode={RecipeMode::New}/>
             }
         }
     }

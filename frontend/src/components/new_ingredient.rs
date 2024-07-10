@@ -1,5 +1,5 @@
 use db::structs::Ingredient;
-use log::error;
+use log::{debug, error};
 use web_sys::HtmlInputElement;
 
 use yew::{platform::spawn_local, prelude::*};
@@ -7,7 +7,7 @@ use yew::{platform::spawn_local, prelude::*};
 use crate::{
     components::{
         input_component::{Input, InputType},
-        RecipePartProps,
+        RecipeMode, RecipePartProps,
     },
     functions::{recipe_functions::create_ingredient, ApiResponse},
     DEFAULT_NOTIFICATION_DURATION,
@@ -20,13 +20,12 @@ use yew_notifications::{use_notification, Notification};
 /// Handles form inputs+changes
 pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
     let RecipePartProps {
-        recipe_id: _,
         callback,
-        old_part: _,
+        old_part,
+        recipe_id: _,
     } = props;
 
     let use_notification = use_notification::<Notification>();
-    let recipe_id = props.recipe_id;
 
     let name_input = use_node_ref();
     let ingredient_quantity_input = use_node_ref();
@@ -34,6 +33,7 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
 
     // handling form submit (adding new ingredient to list)
     let onsubmit = {
+        let old_part = old_part.clone();
         // cloning node ref
         let callback = callback.clone();
 
@@ -59,7 +59,7 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
 
             let ingredient = Ingredient {
                 id: None,
-                recipe_id,
+                recipe_id: old_part.recipe_id,
                 ingredient_name: name.value(),
                 ingredient_quantity: quantity.value().parse::<i32>().unwrap_or(0),
                 quantity_unit: unit.value(),
@@ -81,7 +81,7 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
                                 ));
                             }
                             ApiResponse::ApiMessage(msg) => {
-                                callback.emit(ingredient);
+                                callback.emit((RecipeMode::New, ingredient));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",

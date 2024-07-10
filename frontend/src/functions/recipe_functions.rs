@@ -110,7 +110,7 @@ pub async fn update_recipe(recipe: &Recipe) -> Result<ApiResponse<Recipe, String
     parse_api_response(res).await
 }
 
-pub async fn update_steps(steps: &Vec<Step>) -> Result<ApiResponse<Step, String>, GlooError> {
+pub async fn update_steps(steps: &Step) -> Result<ApiResponse<Step, String>, GlooError> {
     let req = Request::post("/api/update/step")
         .json(&steps)?
         .send()

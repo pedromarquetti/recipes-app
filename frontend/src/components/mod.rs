@@ -15,11 +15,27 @@ use db::structs::RecipeTrait;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-pub struct RecipePartProps<T: PartialEq + RecipeTrait + Default> {
-    pub recipe_id: i32,
+/// `old_part` is a placeholder for the part O that will be modified
+///
+/// `handle_edit` and `handle_new` are used for different components
+///
+/// `T` Represents what type will be used in the fields
+pub struct RecipePartProps<T>
+where
+    T: PartialEq + RecipeTrait + Default,
+{
     #[prop_or_default]
-    pub callback: Callback<T>,
+    pub callback: Callback<(RecipeMode, T)>,
     #[prop_or_default]
     /// old Recipe/Ingredient/Step...
     pub old_part: T,
+    #[prop_or_default]
+    pub recipe_id: i32,
+}
+#[derive(PartialEq, Clone, Debug)]
+pub enum RecipeMode {
+    View,
+    Edit,
+    New,
+    Delete,
 }
