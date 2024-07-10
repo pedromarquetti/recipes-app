@@ -223,6 +223,41 @@ impl FullRecipe {
     pub fn set_owner_name(&mut self, name: String) {
         self.recipe_owner_name = name
     }
+    /// replaces item from list (ingredient)
+    pub fn replace_steps(&mut self, replace_item: Step) -> Result<Vec<Step>, String> {
+        let mut input_vec = self.steps.clone();
+        let idx = input_vec.iter().position(|item| {
+            // matching item id with replace item id
+            item.id.eq(&replace_item.id)
+        });
+        match idx {
+            Some(idx) => {
+                input_vec[idx] = replace_item;
+                Ok(input_vec)
+            }
+            None => return Err(String::from("could not find index")),
+        }
+    }
+    /// replaces item from list (ingredient)
+    ///
+    /// Returns an error as String if fails
+    pub fn replace_ingredient(
+        &mut self,
+        replace_item: Ingredient,
+    ) -> Result<Vec<Ingredient>, String> {
+        let mut input_vec = self.ingredients.clone();
+        let idx = input_vec.iter().position(|ingredient| {
+            // matching item id with replace item id
+            ingredient.id.eq(&replace_item.id)
+        });
+        match idx {
+            Some(idx) => {
+                input_vec[idx] = replace_item;
+                Ok(input_vec)
+            }
+            None => return Err(String::from("could not find index")),
+        }
+    }
 }
 
 #[derive(Deserialize, Clone, Debug, Copy, PartialEq, Eq, Serialize)]
