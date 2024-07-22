@@ -258,6 +258,40 @@ impl FullRecipe {
             None => return Err(String::from("could not find index")),
         }
     }
+    pub fn remove_ingredient(&mut self, input_id: i32) -> Result<Vec<Ingredient>, String> {
+        let mut tmp = self.ingredients.clone();
+        let idx = tmp.iter().position(|ingredient: &Ingredient| {
+            ingredient
+                .id
+                // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
+                .unwrap_or(-1)
+                .eq(&input_id)
+        });
+        match idx {
+            Some(idx) => {
+                tmp.remove(idx);
+                return Ok(tmp);
+            }
+            None => return Err(String::from("No index found")),
+        }
+    }
+    pub fn remove_step(&mut self, input_id: i32) -> Result<Vec<Step>, String> {
+        let mut tmp = self.steps.clone();
+        let idx = tmp.iter().position(|ingredient: &Step| {
+            ingredient
+                .id
+                // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
+                .unwrap_or(-1)
+                .eq(&input_id)
+        });
+        match idx {
+            Some(idx) => {
+                tmp.remove(idx);
+                return Ok(tmp);
+            }
+            None => return Err(String::from("No index found")),
+        }
+    }
 }
 
 #[derive(Deserialize, Clone, Debug, Copy, PartialEq, Eq, Serialize)]
