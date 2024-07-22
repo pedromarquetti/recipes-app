@@ -9,11 +9,10 @@ use diesel::prelude::*;
 pub fn create_recipe_step_query(
     mut conn: PooledPgConnection,
     steps: &Vec<Step>,
-) -> Result<(), DieselError> {
-    diesel::insert_into(step_dsl::recipe_step)
+) -> Result<Vec<Step>, DieselError> {
+    Ok(diesel::insert_into(step_dsl::recipe_step)
         .values::<&Vec<Step>>(&steps)
-        .execute(&mut conn)?;
-    Ok(())
+        .get_results(&mut conn)?)
 }
 
 /// # DB crate

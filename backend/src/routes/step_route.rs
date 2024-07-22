@@ -34,11 +34,11 @@ pub async fn create_step(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        create_recipe_step_query(conn, &recipe_steps).map_err(convert_to_rejection)?;
-
-        return Ok(warp::reply::json(&json!({
-            "msg": format!("{} steps created ", recipe_steps.len())
-        })));
+        return Ok(warp::reply::json(&json!(create_recipe_step_query(
+            conn,
+            &recipe_steps
+        )
+        .map_err(convert_to_rejection)?)));
     }
     return Err(Error::user_error("Cannot create step!", StatusCode::FORBIDDEN).into());
 }
@@ -64,10 +64,11 @@ pub async fn update_step(
     )
     .map_err(convert_to_rejection)?;
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        update_step_query(conn, &recipe_step).map_err(convert_to_rejection)?;
-        return Ok(warp::reply::json(
-            &json!({"msg":format!("step {} modified",recipe_step.step_name)}),
-        ));
+        return Ok(warp::reply::json(&json!(update_step_query(
+            conn,
+            &recipe_step
+        )
+        .map_err(convert_to_rejection)?)));
     }
     return Err(Error::user_error("Cannot update step!", StatusCode::FORBIDDEN).into());
 }
@@ -77,10 +78,6 @@ pub async fn delete_step(
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    if incoming_query.id.is_none() {
-        return Err(Error::payload_error("name or id must be supplied!").into());
-    }
-
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
     let recipe = query_full_recipe(

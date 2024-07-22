@@ -51,7 +51,9 @@ pub async fn delete_recipe(
     let recipe = query_full_recipe(&mut conn, &incoming_query).map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        delete_recipe_query(conn, &incoming_query).map_err(convert_to_rejection)?;
+        if delete_recipe_query(conn, &incoming_query).map_err(convert_to_rejection)? == 0 {
+            return Err(Error::not_found("Recipe not found").into());
+        }
         return Ok(warp::reply::json(
             &json!({"msg":format!("recipe {} deleted", recipe.recipe.recipe_name)
             }),

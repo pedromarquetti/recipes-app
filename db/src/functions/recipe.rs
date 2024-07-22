@@ -25,12 +25,10 @@ pub fn create_recipe_query(
 pub fn delete_recipe_query(
     mut conn: PooledPgConnection,
     incoming_recipe: &UrlRecipeQuery,
-) -> Result<(), DieselError> {
-    diesel::delete(recipe_dsl::recipe)
+) -> Result<usize, DieselError> {
+    Ok(diesel::delete(recipe_dsl::recipe)
         .filter(recipe_dsl::id.eq(incoming_recipe.id.unwrap()))
-        .execute(&mut conn)?;
-
-    Ok(())
+        .execute(&mut conn)?)
 }
 /// Returns full recipe with all fields
 ///

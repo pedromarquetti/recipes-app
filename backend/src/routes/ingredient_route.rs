@@ -32,10 +32,11 @@ pub async fn create_ingredient(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, claims) {
-        create_recipe_ingredient_query(conn, &ingredients).map_err(convert_to_rejection)?;
-        return Ok(warp::reply::json(
-            &json!({"msg":format!("created {} ingredients",ingredients.len())}),
-        ));
+        return Ok(warp::reply::json(&json!(create_recipe_ingredient_query(
+            conn,
+            &ingredients
+        )
+        .map_err(convert_to_rejection)?)));
     }
     return Err(Error::user_error("Cannot create ingredient!", StatusCode::FORBIDDEN).into());
 }
@@ -64,10 +65,11 @@ pub async fn update_ingredient(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, claims) {
-        update_ingredient_query(conn, &ingredient).map_err(convert_to_rejection)?;
-        return Ok(warp::reply::json(
-            &json!({"msg":format!("Ingredient {} deleted",ingredient.ingredient_name)}),
-        ));
+        return Ok(warp::reply::json(&json!(update_ingredient_query(
+            conn,
+            &ingredient
+        )
+        .map_err(convert_to_rejection)?)));
     }
     return Err(Error::user_error("Cannot update ingredient!", StatusCode::FORBIDDEN).into());
 }
@@ -78,10 +80,6 @@ pub async fn delete_ingredient(
     claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    if ingredient.id.is_none() {
-        return Err(Error::payload_error("missing ID field").into());
-    }
-
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
     let recipe = query_full_recipe(

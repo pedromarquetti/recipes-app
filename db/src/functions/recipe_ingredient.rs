@@ -7,11 +7,10 @@ use diesel::prelude::*;
 pub fn create_recipe_ingredient_query(
     mut conn: PooledPgConnection,
     ingredients: &Vec<Ingredient>,
-) -> Result<(), DieselError> {
-    diesel::insert_into(ingredient_dsl::recipe_ingredient)
+) -> Result<Vec<Ingredient>, DieselError> {
+    Ok(diesel::insert_into(ingredient_dsl::recipe_ingredient)
         .values::<&Vec<Ingredient>>(&ingredients)
-        .execute(&mut conn)?;
-    Ok(())
+        .get_results(&mut conn)?)
 }
 
 /// Ingredient DB function responsible for deleting an ingredient
