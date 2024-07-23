@@ -31,7 +31,7 @@ pub async fn handle_rejection(err: Rejection) -> Result<WithStatus<Box<dyn Reply
         error!("{:?}", err);
 
         Ok(Error::payload_error(format!(
-            "Query Error: {:?} - msg {:?}",
+            "Query Error: {:?} - {:?}",
             err.to_string(),
             err.source()
         ))
