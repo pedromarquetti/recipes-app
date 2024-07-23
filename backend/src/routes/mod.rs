@@ -90,7 +90,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and_then(create_step);
     let delete_recipe_step = warp::post()
         .and(path!("api" / "delete" / "step"))
-        .and(warp::query::<Step>())
+        .and(warp::body::json())
         .and(auth())
         .and(pool_filter.clone())
         .and_then(delete_step);
