@@ -1,28 +1,19 @@
-use std::default;
-
 use crate::{
     components::{
         input_component::{Input, InputType},
         new_step::NewSteps,
-        recipe_component::StepList,
         RecipeMode,
     },
-    functions::{
-        recipe_functions::{delete_recipe, update_recipe, update_steps},
-        ApiResponse,
-    },
-    views::Route,
+    functions::{recipe_functions::update_steps, ApiResponse},
     DEFAULT_NOTIFICATION_DURATION,
 };
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_router::prelude::*;
 
-use db::structs::{FullRecipe, Ingredient, Recipe, Step};
-use log::{debug, error, info};
+use db::structs::Step;
+use log::error;
 use yew::platform::spawn_local;
 use yew_notifications::{use_notification, Notification};
-use yew_router::hooks::use_navigator;
 
 use super::RecipePartProps;
 
@@ -49,8 +40,8 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
         })
     }
 
-    // handling form submit (editing ingredient to list)
-    let onsubmit = {
+    // handling form submit (Editing step)
+    let handle_edit = {
         let old_part = old_part.clone();
         let callback = callback.clone();
 
@@ -60,6 +51,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
         let step_duration_min = step_duration_min.clone();
 
         Callback::from(move |event: SubmitEvent| {
+            let old_part = old_part.clone();
             let callback = callback.clone();
             event.prevent_default();
 
@@ -70,29 +62,42 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
             // it'll be used to push new values
 
             // getting form input values...
-            let name = name_input.cast::<HtmlInputElement>().unwrap();
-            let step_instruction = step_instruction.cast::<HtmlInputElement>().unwrap();
-            let step_duration_min = step_duration_min.cast::<HtmlInputElement>().unwrap();
-
-            let step = Step {
-                id: None,
-                recipe_id: old_part.recipe_id,
-                step_name: name.value(),
-                step_instruction: step_instruction.value(),
-                step_duration_min: step_duration_min
-                    .value()
-                    .parse::<i32>()
-                    .map_err(|err| {
-                        let use_notification = use_notification.clone();
-                        use_notification.spawn(Notification::new(
-                            yew_notifications::NotificationType::Error,
-                            "Error!",
-                            err.to_string(),
-                            DEFAULT_NOTIFICATION_DURATION,
-                        ));
-                    })
-                    .unwrap_or(-1),
+            // ignoring empty fields
+            let name_input = name_input.cast::<HtmlInputElement>().unwrap();
+            let step_name = {
+                let value = name_input.value();
+                if value.is_empty() {
+                    old_part.step_name
+                } else {
+                    value
+                }
             };
+            let instruction_input = step_instruction.cast::<HtmlInputElement>().unwrap();
+            let step_instruction = {
+                let value = instruction_input.value();
+                if value.is_empty() {
+                    old_part.step_instruction
+                } else {
+                    value
+                }
+            };
+            let duration_input = step_duration_min.cast::<HtmlInputElement>().unwrap();
+            let step_duration_min = {
+                let value = duration_input.value();
+                if value.is_empty() {
+                    old_part.step_duration_min
+                } else {
+                    value.parse::<i32>().unwrap_or(-1)
+                }
+            };
+            let step = Step {
+                id: old_part.id,
+                recipe_id: old_part.recipe_id,
+                step_name,
+                step_instruction,
+                step_duration_min,
+            };
+
             {
                 let step = step.clone();
                 spawn_local(async move {
@@ -109,12 +114,12 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::ApiMessage(msg) => {
+                            ApiResponse::OkRecipe(_) => {
                                 callback.emit((RecipeMode::Edit, step));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
-                                    msg,
+                                    "Step edited",
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
@@ -131,6 +136,9 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
                         }
                     }
                 });
+                name_input.set_value("");
+                instruction_input.set_value("");
+                duration_input.set_value("");
             }
         })
     };
@@ -138,10 +146,10 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
     html! {<>
     <h1>{"Edit Steps"}</h1>
     {
-        if (*step_state).clone().id.is_some(){
+        if (*step_state).clone().id.is_some() && !*add_step_state{
         html!{
             <div class="new-ingredients">
-        <form {onsubmit}>
+        <form onsubmit={handle_edit}>
             <Input
                 input_node_ref={step_name.clone()}
                 is_required={false}
@@ -163,7 +171,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
                 is_required={false}
                 input_type={InputType::Number}
             />
-            <button>{"New step"}</button>
+            <button>{format!("Update step {}",step_state.step_name)}</button>
 
         </form>
     </div>

@@ -10,7 +10,6 @@ use crate::{
         input_component::{Input, InputType},
         new_ingredient::NewIngredients,
         new_step::NewSteps,
-        RecipeMode,
     },
     functions::{
         recipe_functions::{create_recipe, delete_recipe},
@@ -192,7 +191,7 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
 
         {
             // only show <IngredientList> if there's a valid recipe at recipe_state
-            if let Some(id) = recipe_state.recipe.id{
+            if let Some(_) = recipe_state.recipe.id{
             // TODO! add Observation component
 
             html! {

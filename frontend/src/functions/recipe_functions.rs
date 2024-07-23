@@ -83,7 +83,7 @@ pub async fn delete_ingredient(
 
 pub async fn create_ingredient(
     ingredient: Vec<Ingredient>,
-) -> Result<ApiResponse<Ingredient, String>, GlooError> {
+) -> Result<ApiResponse<Vec<Ingredient>, String>, GlooError> {
     let req = Request::post("/api/create/ingredient")
         .json(&ingredient)?
         .send()
@@ -92,7 +92,7 @@ pub async fn create_ingredient(
     parse_api_response(res).await
 }
 
-pub async fn create_step(step: Vec<&Step>) -> Result<ApiResponse<Step, String>, GlooError> {
+pub async fn create_step(step: Vec<&Step>) -> Result<ApiResponse<Vec<Step>, String>, GlooError> {
     let req = Request::post("/api/create/step")
         .json(&step)?
         .send()
@@ -110,9 +110,9 @@ pub async fn update_recipe(recipe: &Recipe) -> Result<ApiResponse<Recipe, String
     parse_api_response(res).await
 }
 
-pub async fn update_steps(steps: &Step) -> Result<ApiResponse<Step, String>, GlooError> {
+pub async fn update_steps(step: &Step) -> Result<ApiResponse<Step, String>, GlooError> {
     let req = Request::post("/api/update/step")
-        .json(&steps)?
+        .json(&step)?
         .send()
         .await?;
     let res: Value = req.json().await?;

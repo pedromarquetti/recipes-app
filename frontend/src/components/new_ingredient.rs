@@ -1,5 +1,5 @@
 use db::structs::Ingredient;
-use log::{debug, error};
+use log::error;
 use web_sys::HtmlInputElement;
 
 use yew::{platform::spawn_local, prelude::*};
@@ -32,11 +32,11 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
     let quantity_unit_input = use_node_ref();
 
     // handling form submit (adding new ingredient to list)
-    let onsubmit = {
+    let handle_new_ingredient = {
         let old_part = old_part.clone();
-        // cloning node ref
         let callback = callback.clone();
 
+        // cloning node ref
         let name_input = name_input.clone();
         let quantity_input = ingredient_quantity_input.clone();
         let unit_input = quantity_unit_input.clone();
@@ -80,12 +80,12 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::ApiMessage(msg) => {
+                            ApiResponse::OkRecipe(_) => {
                                 callback.emit((RecipeMode::New, ingredient));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
-                                    msg,
+                                    "Ingredient added!",
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
@@ -108,7 +108,7 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
 
     html! {
     <div class="new-ingredients">
-        <form {onsubmit}>
+        <form onsubmit={handle_new_ingredient}>
             <Input
                 input_node_ref={name_input.clone()}
                 is_required={true}

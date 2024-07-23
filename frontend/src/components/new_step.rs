@@ -32,14 +32,14 @@ pub fn new_recipe_step(props: &RecipePartProps<Step>) -> Html {
     // handling form submit (adding new step to list)
     let onsubmit = {
         let old_part = old_part.clone();
+        let callback = callback.clone();
         // cloning node ref
         let name_input = step_name.clone();
         let step_instruction = step_instruction.clone();
         let step_duration_min = step_duration_min.clone();
 
-        // cloning use_state
-
         Callback::from(move |event: SubmitEvent| {
+            let callback = callback.clone();
             event.prevent_default();
 
             let use_notification = use_notification.clone();
@@ -76,12 +76,12 @@ pub fn new_recipe_step(props: &RecipePartProps<Step>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::ApiMessage(msg) => {
+                            ApiResponse::OkRecipe(_) => {
                                 callback.emit((RecipeMode::New, step));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Success!",
-                                    msg,
+                                    "Ingredient created",
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }

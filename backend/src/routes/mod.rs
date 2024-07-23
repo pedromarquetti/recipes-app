@@ -20,7 +20,7 @@ use crate::{
 };
 use db::{
     db_pool::Pool,
-    structs::{Ingredient, Step, UrlRecipeQuery, UrlUserQuery, UserRole},
+    structs::{Ingredient, UrlRecipeQuery, UrlUserQuery, UserRole},
 };
 use recipe_route::check_edit_permission;
 use serde_json::json;

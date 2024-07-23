@@ -26,8 +26,8 @@ where
 {
     #[prop_or_default]
     pub callback: Callback<(RecipeMode, T)>,
-    #[prop_or_default]
     /// old Recipe/Ingredient/Step...
+    #[prop_or_default]
     pub old_part: T,
     #[prop_or_default]
     pub recipe_id: i32,
@@ -38,4 +38,19 @@ pub enum RecipeMode {
     Edit,
     New,
     Delete,
+}
+
+#[derive(Properties, PartialEq, Clone)]
+pub struct ItemProps<T>
+where
+    T: PartialEq + Clone + RecipeTrait + Default,
+{
+    #[prop_or_default]
+    pub item: T,
+    #[prop_or_default]
+    pub item_list: Vec<T>,
+    #[prop_or_default]
+    pub curr_focus: Callback<(RecipeMode, T)>,
+    #[prop_or(RecipeMode::View)]
+    pub mode: RecipeMode,
 }

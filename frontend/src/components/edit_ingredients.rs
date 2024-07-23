@@ -1,24 +1,17 @@
 use crate::{
     components::{
-        ingredient_component::IngredientItem,
         input_component::{Input, InputType},
         new_ingredient::NewIngredients,
-        new_step::NewSteps,
         RecipePartProps,
     },
-    functions::{
-        recipe_functions::{delete_recipe, update_ingredient},
-        ApiResponse,
-    },
-    views::Route,
+    functions::{recipe_functions::update_ingredient, ApiResponse},
     DEFAULT_NOTIFICATION_DURATION,
 };
-use db::structs::{FullRecipe, Ingredient};
-use log::{debug, error, info};
+use db::structs::Ingredient;
+use log::error;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
-use yew_router::hooks::use_navigator;
 
 use super::RecipeMode;
 
@@ -46,8 +39,9 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
     }
 
     // handling form submit (Editing ingredient)
-    let onsubmit = {
+    let handle_edit = {
         let old_part = old_part.clone();
+
         let callback = callback.clone();
 
         // cloning node ref
@@ -56,6 +50,8 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
         let unit_input = quantity_unit_input.clone();
 
         Callback::from(move |event: SubmitEvent| {
+            let old_part = old_part.clone();
+
             let callback = callback.clone();
             event.prevent_default();
 
@@ -66,16 +62,40 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
             // it'll be used to push new values
 
             // getting form input values...
-            let name = name_input.cast::<HtmlInputElement>().unwrap();
-            let quantity = quantity_input.cast::<HtmlInputElement>().unwrap();
-            let unit = unit_input.cast::<HtmlInputElement>().unwrap();
+            let name_input = name_input.cast::<HtmlInputElement>().unwrap();
+            let ingredient_name = {
+                let val = name_input.value();
+                if val.is_empty() {
+                    old_part.ingredient_name
+                } else {
+                    val
+                }
+            };
+            let quantity_input = quantity_input.cast::<HtmlInputElement>().unwrap();
+            let ingredient_quantity = {
+                let val = quantity_input.value();
+                if val.is_empty() {
+                    old_part.ingredient_quantity
+                } else {
+                    val.parse::<i32>().unwrap_or(old_part.ingredient_quantity)
+                }
+            };
+            let unit_input = unit_input.cast::<HtmlInputElement>().unwrap();
+            let quantity_unit = {
+                let val = unit_input.value();
+                if val.is_empty() {
+                    old_part.quantity_unit
+                } else {
+                    val
+                }
+            };
 
             let ingredient = Ingredient {
                 id: old_part.id,
                 recipe_id: old_part.recipe_id,
-                ingredient_name: name.value(),
-                ingredient_quantity: quantity.value().parse::<i32>().unwrap_or(0),
-                quantity_unit: unit.value(),
+                ingredient_name,
+                ingredient_quantity,
+                quantity_unit,
             };
             {
                 let ingredient = ingredient.clone();
@@ -93,12 +113,12 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::ApiMessage(msg) => {
+                            ApiResponse::OkRecipe(_) => {
                                 callback.emit((RecipeMode::Edit, ingredient));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
-                                    msg,
+                                    "Ingredient edited",
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
@@ -115,6 +135,9 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
                         }
                     }
                 });
+                name_input.set_value("");
+                quantity_input.set_value("");
+                unit_input.set_value("");
             }
         })
     };
@@ -124,9 +147,12 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
     <h1>{"Edit Ingredients"}</h1>
     {
     if (*ingredient_state).clone().id.is_some(){
+
         html!{
-            <div class="new-ingredients">
-        <form {onsubmit}>
+        <div class="new-ingredients">
+        <h2>{format!("Editing ingredient {}",ingredient_state.ingredient_name)}</h2>
+
+        <form onsubmit={handle_edit}>
             <Input
                 input_node_ref={name_input.clone()}
                 is_required={false}
@@ -180,11 +206,7 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
 
         }
     }
-    else if (*ingredient_state).clone().id.is_some(){
-        html!{
-            <h2>{format!("Editing ingredient {}",ingredient_state.ingredient_name)}</h2>
-
-    }}else {html!{}}
+    else  {html!{}}
     }
     </>
     }

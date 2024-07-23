@@ -14,10 +14,9 @@ use crate::{
 };
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_router::prelude::*;
 
-use db::structs::{FullRecipe, Ingredient, Recipe, RecipeTrait, Step};
-use log::{debug, error, info};
+use db::structs::{FullRecipe, Ingredient, Step};
+use log::{error, info};
 use yew::platform::spawn_local;
 use yew_notifications::{use_notification, Notification};
 use yew_router::hooks::use_navigator;
@@ -30,7 +29,7 @@ pub struct EditRecipeProps {
     pub edited_recipe: Callback<FullRecipe>,
     pub close: Callback<()>,
     #[prop_or_default]
-    pub ingredient_to_edit: Ingredient,
+    pub current_focus: Ingredient,
     #[prop_or_default]
     pub step_to_edit: Step,
 }
@@ -42,11 +41,12 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         close,
         edited_recipe,
         step_to_edit,
-        ingredient_to_edit,
+        current_focus,
     } = props;
 
     let old_recipe = full_recipe.clone();
     let recipe_state = use_state(|| old_recipe.clone());
+
     {
         let state = recipe_state.clone();
         let edited_recipe = edited_recipe.clone();
@@ -98,6 +98,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
             _ => {}
         })
     };
+
     let ingredient_cb: Callback<(RecipeMode, Ingredient)> = {
         let recipe_state = recipe_state.clone();
         let use_notification = use_notification::<Notification>();
@@ -152,7 +153,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
     let close = close.clone();
 
     // handle recipe rename
-    let rename = {
+    let handle_rename = {
         let recipe_state = recipe_state.clone();
         let use_notification = use_notification.clone();
         let new_name = new_name_ref.clone();
@@ -222,11 +223,60 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         })
     };
 
+    // handler for deleting recipe
+    let handle_delete = {
+        let recipe = recipe.clone();
+
+        Callback::from(move |_| {
+            let navigator = navigator.clone();
+            let recipe = recipe.clone();
+            let use_notification = use_notification.clone();
+            spawn_local(async move {
+                let recipe = recipe.clone();
+                match delete_recipe(&recipe.id).await {
+                    Ok(api_res) => {
+                        match api_res {
+                            ApiResponse::ApiMessage(msg) => {
+                                info!("API message: {:?}", msg);
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Info,
+                                    "Sucess",
+                                    msg,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
+                                navigator.push(&Route::Home)
+                            }
+                            ApiResponse::ApiError(err) => {
+                                error!("API error: {:?}", err);
+                                use_notification.spawn(Notification::new(
+                                    yew_notifications::NotificationType::Error,
+                                    "Error!",
+                                    err,
+                                    DEFAULT_NOTIFICATION_DURATION,
+                                ));
+                            }
+                            _ => {} // this is a placeholder
+                        }
+                    }
+                    Err(err) => {
+                        error!("error: {:?}", err);
+                        use_notification.spawn(Notification::new(
+                            yew_notifications::NotificationType::Error,
+                            "Error!",
+                            err.to_string(),
+                            DEFAULT_NOTIFICATION_DURATION,
+                        ));
+                    }
+                }
+            })
+        })
+    };
+
     html! {
     <div class="recipe">
         <h1>{format!("Editing recipe {}",recipe.recipe_name)}</h1>
         <div class="edit-container">
-        <form onsubmit={rename}>
+        <form onsubmit={handle_rename}>
 
             <Input
                     input_node_ref={new_name_ref}
@@ -246,7 +296,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
 
         <EditIngredient
         recipe_id={recipe_state.clone().recipe.id.unwrap_or_default()}
-        old_part={ingredient_to_edit.clone()}
+        old_part={current_focus.clone()}
         callback={ingredient_cb}
         />
 
@@ -254,50 +304,9 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         <div class="edit-actions">
             // delete recipe
             <button
-            onclick={
-            Callback::from(move |_|{
-                let navigator = navigator.clone();
-                let recipe = recipe.clone();
-                let use_notification = use_notification.clone();
-                spawn_local(async move {
-                    let recipe = recipe.clone();
-                    match delete_recipe(&recipe.id).await{
-                    Ok(api_res)=>{
-                        match api_res {
-                            ApiResponse::ApiMessage(msg)=>{
-                                info!("API message: {:?}", msg);
-                                use_notification.spawn(Notification::new(
-                                    yew_notifications::NotificationType::Info,
-                                    "Sucess",
-                                    msg,
-                                    DEFAULT_NOTIFICATION_DURATION,
-                                ));
-                                navigator.push(&Route::Home)
-                            },
-                            ApiResponse::ApiError(err) => {
-                                error!("API error: {:?}", err);
-                                use_notification.spawn(Notification::new(
-                                    yew_notifications::NotificationType::Error,
-                                    "Error!",
-                                    err,
-                                    DEFAULT_NOTIFICATION_DURATION,
-                                ));
-                            },
-                        _ => {} // this is a placeholder
-                        }},
-                    Err(err)=>{
-                        error!("error: {:?}", err);
-                        use_notification.spawn(Notification::new(
-                                yew_notifications::NotificationType::Error,
-                                "Error!",
-                                err.to_string(),
-                                DEFAULT_NOTIFICATION_DURATION,
-                            ));
-                        }}
-                    })
-                })
-            }
+            onclick={handle_delete}
             >{"Delete recipe"}</button>
+
             // close edit mode button
             <button onclick={move |_|{
             let close = close.clone();
