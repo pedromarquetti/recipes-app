@@ -1,5 +1,5 @@
 use db::structs::User;
-use log::{error, info};
+use log::error;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
@@ -55,7 +55,6 @@ pub fn user_login() -> Html {
                             ));
                         }
                         ApiResponse::ApiMessage(msg) => {
-                            info!("API message: {:?}", msg);
                             use_notification.spawn(Notification::new(
                                 yew_notifications::NotificationType::Info,
                                 "Sucess",

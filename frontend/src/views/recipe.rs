@@ -1,5 +1,5 @@
 use db::structs::FullRecipe;
-use log::{error, info};
+use log::error;
 use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
 
@@ -39,7 +39,6 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
                         Ok(ok_fetch) => match ok_fetch {
                             ApiResponse::OkRecipe(ok_recipe) => {
                                 recipe_state.set(ok_recipe);
-                                info!("recipe fetch ok!");
                             }
                             ApiResponse::ApiError(err) => {
                                 error!("{:?}", err);
@@ -50,9 +49,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::ApiMessage(msg) => {
-                                info!("{:?}", msg);
-                            }
+                            _ => {}
                         },
                         Err(err) => {
                             error!("{}", err);

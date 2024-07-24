@@ -1,5 +1,5 @@
 use db::structs::{FullRecipe, Ingredient, Step};
-use log::{error, info};
+use log::error;
 use web_sys::HtmlInputElement;
 
 use yew::{platform::spawn_local, prelude::*};
@@ -125,7 +125,6 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
                 match create_recipe(&recipe).await {
                     Ok(api_response) => match api_response {
                         ApiResponse::OkRecipe(ok_recipe) => {
-                            info!("recipe created! {:?}", ok_recipe);
                             full_recipe.set_recipe(ok_recipe.clone());
                             recipe_state.set(full_recipe);
                             use_notification.spawn(Notification::new(
@@ -145,7 +144,6 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
                             ));
                         }
                         ApiResponse::ApiMessage(msg) => {
-                            info!("{:?}", msg);
                             use_notification.spawn(Notification::new(
                                 yew_notifications::NotificationType::Info,
                                 "",
@@ -247,7 +245,7 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
                             ));
                         },
                     ApiResponse::ApiMessage(msg) => {
-                        info!("API message: {:?}", msg);
+
                         use_notification.spawn(Notification::new(
                         yew_notifications::NotificationType::Info,
                         "Sucess",

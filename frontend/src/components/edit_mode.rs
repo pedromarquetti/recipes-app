@@ -16,7 +16,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 use db::structs::{FullRecipe, Ingredient, Step};
-use log::{error, info};
+use log::error;
 use yew::platform::spawn_local;
 use yew_notifications::{use_notification, Notification};
 use yew_router::hooks::use_navigator;
@@ -183,7 +183,6 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
                         // handling API Response
                         match ok_fetch {
                             ApiResponse::ApiMessage(msg) => {
-                                info!("API message: {:?}", msg);
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
@@ -237,7 +236,6 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
                     Ok(api_res) => {
                         match api_res {
                             ApiResponse::ApiMessage(msg) => {
-                                info!("API message: {:?}", msg);
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
