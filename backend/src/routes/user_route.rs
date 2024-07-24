@@ -1,9 +1,12 @@
+use crate::error::Error;
 use bcrypt::{hash, verify};
+
 use serde_json::json;
+use warp::test::request;
 use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
 use crate::{
-    error::{convert_to_rejection, Error},
+    error::convert_to_rejection,
     is_dev_server,
     jwt::{generate_token, UserClaims},
 };
@@ -17,7 +20,7 @@ use db::{
 };
 
 pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
     match user.validate(&user.user_pwd) {
         Ok(_) => {
@@ -29,7 +32,7 @@ pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply
                 user_pwd: encrypt_pwd(&user.user_pwd).await?,
             };
             // running query
-            create_user_record(conn, &user).map_err(convert_to_rejection)?;
+            create_user_record(&mut conn, &user).map_err(convert_to_rejection)?;
 
             Ok(warp::reply::json(&json!({
                 "msg": format!("user {} created", user.user_name)
@@ -204,4 +207,64 @@ fn check_user_permission(user: &User, claims: Option<UserClaims>) -> bool {
         }
         return true;
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use db::db_pool::connect_to_db;
+    use db::structs::UserRole;
+
+    use crate::get_db_url;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_create_user_success() {
+        let db_conn: DbConnection = connect_to_db(get_db_url())
+            .expect("expected valid pool!")
+            .get();
+        let user = User {
+            id: Some(1),
+            user_name: "test_user".to_string(),
+            user_role: UserRole::User,
+            user_pwd: "password".to_string(),
+        };
+
+        let response = create_user(db_conn, user).await.unwrap();
+        assert_eq!(response.into_response().status(), StatusCode::OK);
+    }
+
+    // #[tokio::test]
+    // async fn test_create_user_invalid_password() {
+    //     let db_conn = DbConnection::mock().await;
+    //     let user = User {
+    //         id: Some(1),
+    //         user_name: "test_user".to_string(),
+    //         user_role: UserRole::User,
+    //         user_pwd: "weak".to_string(),
+    //     };
+
+    //     let response = create_user(db_conn, user).await.unwrap_err();
+    //     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    //     let error = response.downcast::<Error>().unwrap();
+    //     assert_eq!(error.to_string(), "invalid password PasswordTooShort");
+    // }
+
+    // #[tokio::test]
+    // async fn test_create_user_db_error() {
+    //     let db_conn = DbConnection::mock_error().await;
+    //     let user = User {
+    //         id: Some(1),
+    //         user_name: "test_user".to_string(),
+    //         user_role: UserRole::User,
+    //         user_pwd: "password".to_string(),
+    //     };
+
+    //     let response = create_user(db_conn, user).await.unwrap_err();
+    //     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+    //     let error = response.downcast::<Error>().unwrap();
+    //     assert_eq!(error.to_string(), "database error");
+    // }
 }
