@@ -13,23 +13,22 @@ pub fn get_user_name(conn: &mut PooledPgConnection, user_id: i32) -> Result<Stri
         .first::<String>(conn)?)
 }
 
-pub fn create_user_record(mut conn: PooledPgConnection, user: &User) -> Result<(), DieselError> {
+pub fn create_user_record(conn: &mut PooledPgConnection, user: &User) -> Result<(), DieselError> {
     use crate::schema::recipe_users;
     diesel::insert_into(recipe_users::table)
         .values::<&User>(&user)
-        .execute(&mut conn)?;
+        .execute(conn)?;
     Ok(())
 }
 
 pub fn delete_user_record(
-    mut conn: PooledPgConnection,
+    conn: &mut PooledPgConnection,
     user: &UrlUserQuery,
-) -> Result<(), DieselError> {
+) -> Result<usize, DieselError> {
     use crate::schema::recipe_users;
-    diesel::delete(recipe_users::table)
+    Ok(diesel::delete(recipe_users::table)
         .filter(recipe_users::user_name.eq(&user.name.as_ref().unwrap()))
-        .execute(&mut conn)?;
-    Ok(())
+        .execute(conn)?)
 }
 
 pub fn query_user_info(
@@ -46,7 +45,7 @@ pub fn query_user_info(
             ))
             .filter(user_dsl::user_name.eq(&name))
             .first::<User>(conn)?);
-    } else if let Some(id) = user.id {
+    } else if let Some(user_id) = user.id {
         return Ok(user_dsl::recipe_users
             .select((
                 user_dsl::id,
@@ -54,10 +53,14 @@ pub fn query_user_info(
                 user_dsl::user_role,
                 user_dsl::user_pwd,
             ))
-            .filter(user_dsl::id.eq(&id))
+            .filter(user_dsl::id.eq(&user_id))
             .first::<User>(conn)?);
+    } else {
+        return Err(DieselError::DatabaseError(
+            diesel::result::DatabaseErrorKind::NotNullViolation,
+            Box::new(String::from("expected id or name")),
+        ));
     }
-    Err(DieselError::NotFound)
 }
 
 pub fn update_user_record(conn: &mut PooledPgConnection, user: &User) -> Result<(), DieselError> {

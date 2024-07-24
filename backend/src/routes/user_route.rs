@@ -2,7 +2,6 @@ use crate::error::Error;
 use bcrypt::{hash, verify};
 
 use serde_json::json;
-use warp::test::request;
 use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
 use crate::{
@@ -64,8 +63,9 @@ pub async fn delete_user(
     // check if user can delete queried user (admins only) OR if user can delete themselves
     if check_user_permission(&usr, user_claims) {
         // running query
-        delete_user_record(conn, &user_query).map_err(convert_to_rejection)?;
-
+        if delete_user_record(&mut conn, &user_query).map_err(convert_to_rejection)? == 0 {
+            return Err(Error::not_found("User not found").into());
+        }
         return Ok(warp::reply::json(&json!({
             "msg": format!("user deleted")
         })));
