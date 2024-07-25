@@ -24,9 +24,9 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
         old_part,
         recipe_id,
     } = props;
-    let add_step_state = use_state(|| false);
-    let step_state = use_state(|| old_part.clone());
+    let step_state = use_state(|| Step::default());
     let use_notification = use_notification::<Notification>();
+    let mode = use_state(|| RecipeMode::View);
 
     let step_name = use_node_ref();
     let step_instruction = use_node_ref();
@@ -34,14 +34,22 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
 
     {
         let state = step_state.clone();
+        let mode = mode.clone();
+        let old_part = old_part.clone();
         use_effect_with(old_part.clone(), move |i: &Step| {
             // setting ingredient_state
-            state.set(i.clone())
+            state.set(i.clone());
+            if old_part.id.is_some() {
+                mode.set(RecipeMode::Edit)
+            } else {
+                mode.set(RecipeMode::View)
+            }
         })
     }
 
     // handling form submit (Editing step)
     let handle_edit = {
+        let state = step_state.clone();
         let old_part = old_part.clone();
         let callback = callback.clone();
 
@@ -100,6 +108,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
 
             {
                 let step = step.clone();
+                let state = state.clone();
                 spawn_local(async move {
                     let use_notification = use_notification.clone();
 
@@ -116,6 +125,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
                             }
                             ApiResponse::OkRecipe(_) => {
                                 callback.emit((RecipeMode::Edit, step));
+                                state.set(Default::default());
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
@@ -143,54 +153,57 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
         })
     };
 
-    html! {<>
-    <h1>{"Edit Steps"}</h1>
-    {
-        if (*step_state).clone().id.is_some() && !*add_step_state{
-        html!{
-            <div class="new-ingredients">
-        <form onsubmit={handle_edit}>
-            <Input
-                input_node_ref={step_name.clone()}
-                is_required={false}
-                input_placeholder={(*step_state).clone().step_name}
-                input_name="step name"
-                input_type={InputType::Text}
-            />
-            <Input
-                input_node_ref={step_instruction.clone()}
-                input_placeholder={(*step_state).clone().step_instruction}
-                is_required={false}
-                input_name="Step instruction"
-                input_type={InputType::Text}
-            />
-            <Input
-                input_node_ref={step_duration_min.clone()}
-                input_placeholder={format!("{}",(*step_state).clone().step_duration_min)}
-                input_name="duration"
-                is_required={false}
-                input_type={InputType::Number}
-            />
-            <button>{format!("Update step {}",step_state.step_name)}</button>
+    html! {
+    <div class="new-ingredients">
 
-        </form>
-    </div>
-        }
-    }else{html!{}}
+    // conditionally redering New Step
+    {if *mode.clone() == RecipeMode::Edit || *mode.clone() == RecipeMode::View {
+
+        html!{<button onclick={{
+            let mode = mode.clone();Callback::from(move|_|{mode.set(RecipeMode::New)})
+        }}>{"Add new Step"}</button>}
+
+    } else {html!{}}
     }
 
+    {
+        match *mode {
+        RecipeMode::Edit=>{
+            html!{
+            <>
+                <h1>{"Edit Step"}</h1>
+                <form onsubmit={handle_edit}>
+                    <Input
+                        input_node_ref={step_name.clone()}
+                        is_required={false}
+                        input_placeholder={(*step_state).clone().step_name}
+                        input_name="step name"
+                        input_type={InputType::Text}
+                    />
+                    <Input
+                        input_node_ref={step_instruction.clone()}
+                        input_placeholder={(*step_state).clone().step_instruction}
+                        is_required={false}
+                        input_name="Step instruction"
+                        input_type={InputType::Text}
+                    />
+                    <Input
+                        input_node_ref={step_duration_min.clone()}
+                        input_placeholder={format!("{}",(*step_state).clone().step_duration_min)}
+                        input_name="duration"
+                        is_required={false}
+                        input_type={InputType::Number}
+                    />
+                    <button>{format!("Update step {}",step_state.step_name)}</button>
 
-
-    {if !*add_step_state.clone() {
-        html!{
-            <button onclick={{let add_step_state=add_step_state.clone();Callback::from(move|_|{add_step_state.set(true)})}}>{"Add Steps"}</button>
+                </form>
+            </>
+            }
         }
-    } else {
-        html!{}
-    }}
-    {if *add_step_state.clone() {
-        html!{<>
-            <button onclick={{let add_step_state=add_step_state.clone();Callback::from(move|_|{add_step_state.set(false)})}}>{"Cancel Add Steps"}</button>
+        RecipeMode::New=>{html!{
+            <>
+                <h1>{"New Step"}</h1>
+
             <NewSteps
             old_part={Step {
                 recipe_id:recipe_id.clone(),
@@ -198,10 +211,16 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
             }}
             {callback}
             />
-            </>
-        }
-    } else {html!{}}}
 
-    </>
+            <button onclick={{
+                let mode = mode.clone(); Callback::from(move|_| {mode.set(RecipeMode::View)})
+            }}>{"Cancel Add Steps"}</button>
+            </>
+        }}
+        _=>{html!{}}
+        }
+    }
+    </div>
+
     }
 }

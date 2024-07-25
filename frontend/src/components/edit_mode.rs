@@ -29,7 +29,7 @@ pub struct EditRecipeProps {
     pub edited_recipe: Callback<FullRecipe>,
     pub close: Callback<()>,
     #[prop_or_default]
-    pub current_focus: Ingredient,
+    pub ingredient_to_edit: Ingredient,
     #[prop_or_default]
     pub step_to_edit: Step,
 }
@@ -41,7 +41,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         close,
         edited_recipe,
         step_to_edit,
-        current_focus,
+        ingredient_to_edit,
     } = props;
 
     let old_recipe = full_recipe.clone();
@@ -296,7 +296,7 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
 
         <EditIngredient
         recipe_id={recipe_state.clone().recipe.id.unwrap_or_default()}
-        old_part={current_focus.clone()}
+        old_part={ingredient_to_edit.clone()}
         callback={ingredient_cb}
         />
 

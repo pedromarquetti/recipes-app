@@ -63,6 +63,8 @@ button {
 	background: #979797;
 	transition: 0.2s;
 }
+
+a:hover,
 button:hover {
 	background: #828181;
 	transition: 0.8s;
