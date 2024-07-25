@@ -216,13 +216,16 @@ impl FullRecipe {
     pub fn set_ingredients(&mut self, ingredient: Vec<Ingredient>) {
         self.ingredients = ingredient
     }
+
     /// modify Steps inside FullRecipe
     pub fn set_steps(&mut self, steps: Vec<Step>) {
         self.steps = steps
     }
+
     pub fn set_owner_name(&mut self, name: String) {
         self.recipe_owner_name = name
     }
+
     /// replaces item from list (ingredient)
     pub fn replace_steps(&mut self, replace_item: Step) -> Result<Vec<Step>, String> {
         let mut input_vec = self.steps.clone();
@@ -238,6 +241,7 @@ impl FullRecipe {
             None => return Err(String::from("could not find index")),
         }
     }
+
     /// replaces item from list (ingredient)
     ///
     /// Returns an error as String if fails
@@ -258,6 +262,7 @@ impl FullRecipe {
             None => return Err(String::from("could not find index")),
         }
     }
+
     pub fn remove_ingredient(&mut self, input_id: i32) -> Result<Vec<Ingredient>, String> {
         let mut tmp = self.ingredients.clone();
         let idx = tmp.iter().position(|ingredient: &Ingredient| {
@@ -275,6 +280,7 @@ impl FullRecipe {
             None => return Err(String::from("No index found")),
         }
     }
+
     pub fn remove_step(&mut self, input_id: i32) -> Result<Vec<Step>, String> {
         let mut tmp = self.steps.clone();
         let idx = tmp.iter().position(|ingredient: &Step| {
@@ -288,6 +294,41 @@ impl FullRecipe {
             Some(idx) => {
                 tmp.remove(idx);
                 return Ok(tmp);
+            }
+            None => return Err(String::from("No index found")),
+        }
+    }
+
+    /// Step finder from ID
+    pub fn get_step(&mut self, input_id: i32) -> Result<Step, String> {
+        let tmp = self.steps.clone();
+        let idx = self.steps.iter().position(|step: &Step| {
+            step.id
+                // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
+                .unwrap_or(-1)
+                .eq(&input_id)
+        });
+        match idx {
+            Some(idx) => {
+                return Ok(tmp[idx].clone());
+            }
+            None => return Err(String::from("No index found")),
+        }
+    }
+
+    /// Ingredient finder from ID
+    pub fn get_ingredient(&mut self, input_id: i32) -> Result<Ingredient, String> {
+        let tmp = self.ingredients.clone();
+        let idx = self.ingredients.iter().position(|ingredient: &Ingredient| {
+            ingredient
+                .id
+                // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
+                .unwrap_or(-1)
+                .eq(&input_id)
+        });
+        match idx {
+            Some(idx) => {
+                return Ok(tmp[idx].clone());
             }
             None => return Err(String::from("No index found")),
         }
