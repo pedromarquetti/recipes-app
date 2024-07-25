@@ -39,7 +39,7 @@ pub struct ApiOkResponse {
     diesel(table_name = recipe_step),
 )]
 pub struct Step {
-    pub id: Option<i32>,
+    pub id: i32,
     pub recipe_id: i32,
     pub step_name: String,
     pub step_instruction: String,
@@ -48,7 +48,7 @@ pub struct Step {
 impl Default for Step {
     fn default() -> Self {
         Step {
-            id: None,
+            id: 0,
             recipe_id: 0,
             step_name: String::new(),
             step_instruction: String::new(),
@@ -296,13 +296,9 @@ impl FullRecipe {
     /// Returns a new Vec with modified items
     pub fn remove_step(&mut self, input_id: i32) -> Result<Vec<Step>, String> {
         let mut tmp = self.steps.clone();
-        let idx = tmp.iter().position(|ingredient: &Step| {
-            ingredient
-                .id
-                // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
-                .unwrap_or(-1)
-                .eq(&input_id)
-        });
+        let idx = tmp
+            .iter()
+            .position(|ingredient: &Step| ingredient.id.eq(&input_id));
         match idx {
             Some(idx) => {
                 tmp.remove(idx);
@@ -315,12 +311,10 @@ impl FullRecipe {
     /// Step finder from ID
     pub fn get_step(&mut self, input_id: i32) -> Result<Step, String> {
         let tmp = self.steps.clone();
-        let idx = self.steps.iter().position(|step: &Step| {
-            step.id
-                // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
-                .unwrap_or(-1)
-                .eq(&input_id)
-        });
+        let idx = self
+            .steps
+            .iter()
+            .position(|step: &Step| step.id.eq(&input_id));
         match idx {
             Some(idx) => {
                 return Ok(tmp[idx].clone());
@@ -402,7 +396,7 @@ impl FromSql<Text, Pg> for UserRole {
     diesel(table_name = recipe_users)
 )]
 pub struct User {
-    pub id: Option<i32>,
+    pub id: i32,
     pub user_name: String,
     pub user_role: UserRole,
     pub user_pwd: String,
@@ -410,7 +404,7 @@ pub struct User {
 impl Default for User {
     fn default() -> Self {
         User {
-            id: None,
+            id: 0,
             user_name: String::new(),
             user_role: UserRole::User,
             user_pwd: String::new(),
@@ -421,7 +415,7 @@ impl Default for User {
 impl User {
     /// modify Steps inside FullRecipe
     pub fn set_id(&mut self, user_id: i32) {
-        self.id = Some(user_id)
+        self.id = user_id
     }
     /// Password validation function
     pub fn validate(&self, pwd: &str) -> Result<String, IOError> {
