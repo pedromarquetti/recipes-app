@@ -22,24 +22,32 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
         callback,
         recipe_id,
     } = props;
-    let add_ingredient_state = use_state(|| false);
     let ingredient_state = use_state(|| Ingredient::default());
     let use_notification = use_notification::<Notification>();
+    let mode = use_state(|| RecipeMode::View);
 
     let name_input = use_node_ref();
     let ingredient_quantity_input = use_node_ref();
     let quantity_unit_input = use_node_ref();
 
     {
+        let mode = mode.clone();
+        let old_part = old_part.clone();
         let state = ingredient_state.clone();
         use_effect_with(old_part.clone(), move |i: &Ingredient| {
             // setting ingredient_state
-            state.set(i.clone())
+            state.set(i.clone());
+            if old_part.id.is_some() {
+                mode.set(RecipeMode::Edit)
+            } else {
+                mode.set(RecipeMode::View)
+            }
         })
     }
 
     // handling form submit (Editing ingredient)
     let handle_edit = {
+        let ingredient_state = ingredient_state.clone();
         let old_part = old_part.clone();
 
         let callback = callback.clone();
@@ -97,8 +105,10 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
                 ingredient_quantity,
                 quantity_unit,
             };
+
             {
                 let ingredient = ingredient.clone();
+                let state = ingredient_state.clone();
                 spawn_local(async move {
                     let use_notification = use_notification.clone();
 
@@ -121,6 +131,7 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
                                     "Ingredient edited",
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
+                                state.set(Default::default());
                             }
                             _ => {}
                         },
@@ -143,71 +154,74 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
     };
 
     html! {
-    <>
-    <h1>{"Edit Ingredients"}</h1>
-    {
-    if (*ingredient_state).clone().id.is_some(){
-
-        html!{
         <div class="new-ingredients">
-        <h2>{format!("Editing ingredient {}",ingredient_state.ingredient_name)}</h2>
-
-        <form onsubmit={handle_edit}>
-            <Input
-                input_node_ref={name_input.clone()}
-                is_required={false}
-                input_placeholder={format!("Current name is {}",ingredient_state.ingredient_name)}
-                input_name="ingredient name"
-                input_type={InputType::Text}
-            />
-
-            <Input
-                input_node_ref={ingredient_quantity_input.clone()}
-                input_placeholder={format!("Current quantity {}",ingredient_state.quantity_unit)}
-                is_required={false}
-                input_name="ingredient quantity"
-                input_type={InputType::Number}
-            />
-
-            <Input
-                input_node_ref={quantity_unit_input.clone()}
-                input_placeholder={format!("Current value is  {}",ingredient_state.quantity_unit)}
-                input_name="ingredient unit"
-                is_required={false}
-                input_type={InputType::Text}
-            />
-                <button>{format!("Update ingredient {}",ingredient_state.ingredient_name)}</button>
-
-        </form>
-    </div>
-        }
-    }else{html!{}}
-    }
 
     // conditionally redering NewIngredients
-    {if !*add_ingredient_state.clone() {
-        html!{<button onclick={{let add_ingredient_state = add_ingredient_state.clone();Callback::from(move|_|{add_ingredient_state.set(true)})}}>{"Add new Ingredients"}</button>}
+    {if *mode.clone() == RecipeMode::Edit || *mode.clone() == RecipeMode::View {
+        html!{<button onclick={{
+            let mode = mode.clone();Callback::from(move|_|{mode.set(RecipeMode::New)})
+        }}>{"Add new Ingredient"}</button>}
 
-    } else {
-        html!{}
-    }}
-    {if *add_ingredient_state.clone() {
-        html!{<>
-            <NewIngredients
-            old_part={Ingredient{
-                recipe_id:recipe_id.clone(),
-                ..Default::default()
-            }}
-            {callback}
+    } else {html!{}}
+    }
+    {
+    match *mode {
+        RecipeMode::Edit=>{html!{
+        <>
+            <h1>{"Edit Ingredients"}</h1>
+            <h2>{format!("Editing ingredient {}",ingredient_state.ingredient_name)}</h2>
 
-            />
-            <button onclick={{let add_ingredient_state = add_ingredient_state.clone(); Callback::from(move|_| {add_ingredient_state.set(false)})}}>{"Cancel add new ingredients"}</button>
+            <form onsubmit={handle_edit}>
+                <Input
+                    input_node_ref={name_input.clone()}
+                    is_required={false}
+                    input_placeholder={format!("Current name is {}",ingredient_state.ingredient_name)}
+                    input_name="ingredient name"
+                    input_type={InputType::Text}
+                />
+
+                <Input
+                    input_node_ref={ingredient_quantity_input.clone()}
+                    input_placeholder={format!("Current quantity {}",ingredient_state.quantity_unit)}
+                    is_required={false}
+                    input_name="ingredient quantity"
+                    input_type={InputType::Number}
+                />
+
+                <Input
+                    input_node_ref={quantity_unit_input.clone()}
+                    input_placeholder={format!("Current value is  {}",ingredient_state.quantity_unit)}
+                    input_name="ingredient unit"
+                    is_required={false}
+                    input_type={InputType::Text}
+                />
+                    <button>{format!("Update ingredient {}",ingredient_state.ingredient_name)}</button>
+
+            </form>
             </>
-
         }
     }
-    else  {html!{}}
+        RecipeMode::New=>{html!{
+            <>
+                <h1>{"New Ingredient"}</h1>
+
+                // user wants to add new item
+                <NewIngredients
+                old_part={Ingredient{
+                    recipe_id:recipe_id.clone(),
+                    ..Default::default()
+                }}
+                {callback}
+                />
+                <button onclick={{
+                    let mode = mode.clone(); Callback::from(move|_| {mode.set(RecipeMode::View)})
+                }}>{"Cancel add new ingredients"}</button>
+            </>
+        }
     }
-    </>
+            _=>{html!()}
+        }}
+    </div>
+
     }
 }

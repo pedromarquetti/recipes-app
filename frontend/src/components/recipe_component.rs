@@ -178,7 +178,7 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                 html!{
                 <EditRecipe
                 full_recipe={(*full_recipe).clone()}
-                current_focus={(*ingredient_to_edit).clone()}
+                ingredient_to_edit={(*ingredient_to_edit).clone()}
                 step_to_edit={(*step_to_edit).clone()}
                 edited_recipe={
                     Callback::from(move |edited_recipe:FullRecipe|{
