@@ -4,12 +4,30 @@ on: push
 
 env:
   CARGO_TERM_COLOR: always
+  POSTGRES_DB: recipe_app
+  POSTGRES_USER: dev
+  POSTGRES_PASSWORD: dev
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{env.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{env.POSTGRES_PASSWORD}}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Set up PostgreSQL
+        run: |
+          cargo install diesel_cli
+          PGPASSWORD=${{env.POSTGRES_PASSWORD}} psql -h localhost -U ${{env.POSTGRES_USER}} -c "CREATE DATABASE dev;" -d ${{env.POSTGRES_DB}} ; exit
+          cd db
+          diesel migration run
       - name: Run tests
         run: cargo test --verbose
