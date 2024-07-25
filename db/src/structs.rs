@@ -124,7 +124,7 @@ pub struct Recipe {
     pub id: i32,
     pub user_id: Option<i32>,
     pub recipe_name: String,
-    pub recipe_observations: Option<Vec<String>>,
+    pub recipe_observations: Option<Vec<Option<String>>>,
 }
 impl Default for Recipe {
     fn default() -> Self {
@@ -151,7 +151,7 @@ impl Recipe {
         self.user_id = Some(user_id)
     }
 
-    pub fn set_observation(&mut self, obs: Option<Vec<String>>) {
+    pub fn set_observation(&mut self, obs: Option<Vec<Option<String>>>) {
         self.recipe_observations = obs
     }
 }
