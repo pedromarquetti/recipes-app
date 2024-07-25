@@ -6,7 +6,7 @@ use crate::{
 use diesel::prelude::*;
 
 /// # DB crate
-pub fn create_recipe_step_query(
+pub fn create_step_query(
     mut conn: PooledPgConnection,
     steps: &Vec<Step>,
 ) -> Result<Vec<Step>, DieselError> {
@@ -16,10 +16,7 @@ pub fn create_recipe_step_query(
 }
 
 /// # DB crate
-pub fn delete_recipe_step_query(
-    mut conn: PooledPgConnection,
-    step: &Step,
-) -> Result<usize, DieselError> {
+pub fn delete_step_query(mut conn: PooledPgConnection, step: &Step) -> Result<usize, DieselError> {
     Ok(diesel::delete(step_dsl::recipe_step)
         .filter(step_dsl::id.eq(step.id.unwrap()))
         .execute(&mut conn)?)

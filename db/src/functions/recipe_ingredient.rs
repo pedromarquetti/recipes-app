@@ -4,7 +4,7 @@ use crate::structs::Ingredient;
 use diesel::prelude::*;
 
 /// Ingredient DB function responsible for creating an ingredient
-pub fn create_recipe_ingredient_query(
+pub fn create_ingredient_query(
     mut conn: PooledPgConnection,
     ingredients: &Vec<Ingredient>,
 ) -> Result<Vec<Ingredient>, DieselError> {
@@ -14,7 +14,7 @@ pub fn create_recipe_ingredient_query(
 }
 
 /// Ingredient DB function responsible for deleting an ingredient
-pub fn delete_recipe_ingredient_query(
+pub fn delete_ingredient_query(
     mut conn: PooledPgConnection,
     ingredient: &Ingredient,
 ) -> Result<usize, DieselError> {

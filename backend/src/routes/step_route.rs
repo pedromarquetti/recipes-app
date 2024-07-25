@@ -34,7 +34,7 @@ pub async fn create_step(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        return Ok(warp::reply::json(&json!(create_recipe_step_query(
+        return Ok(warp::reply::json(&json!(create_step_query(
             conn,
             &recipe_steps
         )
@@ -89,7 +89,7 @@ pub async fn delete_step(
     )
     .map_err(convert_to_rejection)?;
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        if delete_recipe_step_query(conn, &incoming_query).map_err(convert_to_rejection)? == 0 {
+        if delete_step_query(conn, &incoming_query).map_err(convert_to_rejection)? == 0 {
             return Err(Error::not_found("Step not found").into());
         }
 

@@ -32,7 +32,7 @@ pub async fn create_ingredient(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, claims) {
-        return Ok(warp::reply::json(&json!(create_recipe_ingredient_query(
+        return Ok(warp::reply::json(&json!(create_ingredient_query(
             conn,
             &ingredients
         )
@@ -92,7 +92,7 @@ pub async fn delete_ingredient(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, claims) {
-        if delete_recipe_ingredient_query(conn, &ingredient).map_err(convert_to_rejection)? == 0 {
+        if delete_ingredient_query(conn, &ingredient).map_err(convert_to_rejection)? == 0 {
             return Err(Error::not_found("Ingredient not found").into());
         }
 
