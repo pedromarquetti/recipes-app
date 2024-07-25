@@ -198,16 +198,6 @@ impl Default for FullRecipe {
     }
 }
 impl FullRecipe {
-    /// creates new FullRecipe with Recipe id
-    pub fn new_with_id(id: i32) -> Self {
-        Self {
-            recipe: Recipe {
-                id: Some(id),
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    }
     /// modify Recipe inside FullRecipe
     pub fn set_recipe(&mut self, recipe: Recipe) {
         self.recipe = recipe
@@ -226,7 +216,13 @@ impl FullRecipe {
         self.recipe_owner_name = name
     }
 
-    /// replaces item from list (ingredient)
+    /// Replaces item from list
+    ///
+    /// # Returns
+    ///
+    /// Returns an error as String if fails
+    ///
+    /// Returns a new Vec with modified items
     pub fn replace_steps(&mut self, replace_item: Step) -> Result<Vec<Step>, String> {
         let mut input_vec = self.steps.clone();
         let idx = input_vec.iter().position(|item| {
@@ -242,9 +238,13 @@ impl FullRecipe {
         }
     }
 
-    /// replaces item from list (ingredient)
+    /// Replaces item from list
+    ///
+    /// # Returns
     ///
     /// Returns an error as String if fails
+    ///
+    /// Returns a new Vec with modified items
     pub fn replace_ingredient(
         &mut self,
         replace_item: Ingredient,
@@ -263,6 +263,13 @@ impl FullRecipe {
         }
     }
 
+    /// Removes item from list
+    ///
+    /// # Returns
+    ///
+    /// Returns an error as String if fails
+    ///
+    /// Returns a new Vec with modified items
     pub fn remove_ingredient(&mut self, input_id: i32) -> Result<Vec<Ingredient>, String> {
         let mut tmp = self.ingredients.clone();
         let idx = tmp.iter().position(|ingredient: &Ingredient| {
@@ -281,6 +288,13 @@ impl FullRecipe {
         }
     }
 
+    /// Removes item from list
+    ///
+    /// # Returns
+    ///
+    /// Returns an error as String if fails
+    ///
+    /// Returns a new Vec with modified items
     pub fn remove_step(&mut self, input_id: i32) -> Result<Vec<Step>, String> {
         let mut tmp = self.steps.clone();
         let idx = tmp.iter().position(|ingredient: &Step| {
