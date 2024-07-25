@@ -79,7 +79,7 @@ impl Step {
     diesel(table_name = recipe_ingredient),
 )]
 pub struct Ingredient {
-    pub id: Option<i32>,
+    pub id: i32,
     pub recipe_id: i32,
     pub ingredient_name: String,
     pub ingredient_quantity: i32,
@@ -88,7 +88,7 @@ pub struct Ingredient {
 impl Default for Ingredient {
     fn default() -> Self {
         Ingredient {
-            id: None,
+            id: 0,
             recipe_id: 0,
             ingredient_name: String::new(),
             ingredient_quantity: 0,
@@ -121,7 +121,7 @@ impl Ingredient {
     diesel(table_name = recipe),
 )]
 pub struct Recipe {
-    pub id: Option<i32>,
+    pub id: i32,
     pub user_id: Option<i32>,
     pub recipe_name: String,
     pub recipe_observations: Option<Vec<String>>,
@@ -129,7 +129,7 @@ pub struct Recipe {
 impl Default for Recipe {
     fn default() -> Self {
         Recipe {
-            id: None,
+            id: 0,
             user_id: None,
             recipe_name: String::new(),
             recipe_observations: None,
@@ -145,7 +145,7 @@ impl Recipe {
         self.recipe_name = name.into();
     }
     pub fn set_id(&mut self, recipe_id: i32) {
-        self.id = Some(recipe_id)
+        self.id = recipe_id
     }
     pub fn set_user_id(&mut self, user_id: i32) {
         self.user_id = Some(user_id)
@@ -276,7 +276,6 @@ impl FullRecipe {
             ingredient
                 .id
                 // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
-                .unwrap_or(-1)
                 .eq(&input_id)
         });
         match idx {
@@ -337,7 +336,6 @@ impl FullRecipe {
             ingredient
                 .id
                 // if no id is present, unwrap and set it to -1 (invalid, will return "no idx found")
-                .unwrap_or(-1)
                 .eq(&input_id)
         });
         match idx {
