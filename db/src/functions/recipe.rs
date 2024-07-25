@@ -4,6 +4,7 @@ use crate::structs::UrlRecipeQuery;
 use crate::{schema::recipe::dsl as recipe_dsl, structs::Ingredient};
 
 use diesel::prelude::*;
+use diesel::result::DatabaseErrorKind;
 
 use crate::{
     db_pool::{DieselError, PooledPgConnection},
@@ -13,22 +14,33 @@ use crate::{
 use super::user::get_user_name;
 
 pub fn create_recipe_query(
-    mut conn: PooledPgConnection,
+    conn: &mut PooledPgConnection,
     incoming_recipe: &Recipe,
 ) -> Result<Recipe, DieselError> {
     Ok(diesel::insert_into(recipe_dsl::recipe)
         .values(incoming_recipe)
-        .get_result::<Recipe>(&mut conn)?)
+        .get_result::<Recipe>(conn)?)
 }
 
 /// Deletes Recipe record based on id
 pub fn delete_recipe_query(
-    mut conn: PooledPgConnection,
+    conn: &mut PooledPgConnection,
     incoming_recipe: &UrlRecipeQuery,
 ) -> Result<usize, DieselError> {
-    Ok(diesel::delete(recipe_dsl::recipe)
-        .filter(recipe_dsl::id.eq(incoming_recipe.id.unwrap()))
-        .execute(&mut conn)?)
+    if let Some(input_id) = &incoming_recipe.id {
+        Ok(diesel::delete(recipe_dsl::recipe)
+            .filter(recipe_dsl::id.eq(input_id))
+            .execute(conn)?)
+    } else if let Some(input_name) = &incoming_recipe.name {
+        Ok(diesel::delete(recipe_dsl::recipe)
+            .filter(recipe_dsl::recipe_name.eq(input_name))
+            .execute(conn)?)
+    } else {
+        Err(DieselError::DatabaseError(
+            DatabaseErrorKind::NotNullViolation,
+            Box::new(String::from("Name or ID must be supplied")),
+        ))
+    }
 }
 /// Returns full recipe with all fields
 ///
@@ -70,21 +82,21 @@ pub fn query_full_recipe(
 
 /// Returns a list of `Recipe` struct
 pub fn fuzzy_query(
-    mut conn: PooledPgConnection,
+    conn: &mut PooledPgConnection,
     recipe_name: &String,
 ) -> Result<Vec<Recipe>, DieselError> {
     Ok(recipe_dsl::recipe
         .filter(recipe_dsl::recipe_name.like(format!("{:}%", recipe_name)))
-        .get_results(&mut conn)?)
+        .get_results(conn)?)
 }
 
 /// Change details about Recipe (name, observations...)
 pub fn update_recipe_query(
-    mut conn: PooledPgConnection,
+    conn: &mut PooledPgConnection,
     incoming_recipe: &Recipe,
 ) -> Result<Recipe, DieselError> {
     Ok(diesel::update(recipe_dsl::recipe)
         .filter(recipe_dsl::id.eq(incoming_recipe.id.unwrap()))
         .set(incoming_recipe)
-        .get_result(&mut conn)?)
+        .get_result(conn)?)
 }

@@ -21,7 +21,7 @@ pub async fn create_recipe(
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
+    let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
     // if user is logged in...
     if let Some(claims) = user_claims {
@@ -33,7 +33,7 @@ pub async fn create_recipe(
 
     Ok(warp::reply::json(
         // sending query to db
-        &create_recipe_query(conn, &recipe).map_err(convert_to_rejection)?,
+        &create_recipe_query(&mut conn, &recipe).map_err(convert_to_rejection)?,
     ))
 }
 
@@ -51,7 +51,7 @@ pub async fn delete_recipe(
     let recipe = query_full_recipe(&mut conn, &incoming_query).map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        if delete_recipe_query(conn, &incoming_query).map_err(convert_to_rejection)? == 0 {
+        if delete_recipe_query(&mut conn, &incoming_query).map_err(convert_to_rejection)? == 0 {
             return Err(Error::not_found("Recipe not found").into());
         }
         return Ok(warp::reply::json(
@@ -84,10 +84,10 @@ pub async fn fuzzy_query_recipe(
         return Err(Error::payload_error("name must be supplied!").into());
     }
 
-    let conn = db_connection.map_err(convert_to_rejection)?;
+    let mut conn = db_connection.map_err(convert_to_rejection)?;
 
     Ok(warp::reply::json::<Vec<Recipe>>(
-        &fuzzy_query(conn, &incoming_query.name.unwrap()).map_err(convert_to_rejection)?,
+        &fuzzy_query(&mut conn, &incoming_query.name.unwrap()).map_err(convert_to_rejection)?,
     ))
 }
 
@@ -112,7 +112,7 @@ pub async fn update_recipe(
     .map_err(convert_to_rejection)?;
 
     if validate_permission(recipe.recipe.user_id, user_claims) {
-        update_recipe_query(conn, &incoming_recipe).map_err(convert_to_rejection)?;
+        update_recipe_query(&mut conn, &incoming_recipe).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(&json!({"msg":"recipe updated!"})));
     } else {
         return Err(Error::user_error("Cannot update recipe", StatusCode::UNAUTHORIZED).into());
