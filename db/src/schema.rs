@@ -3,7 +3,7 @@
 diesel::table! {
     recipe (id) {
         id -> Int4,
-        user_id -> Nullable<Int4>,
+        user_id -> Int4,
         #[max_length = 100]
         recipe_name -> Varchar,
         recipe_observations -> Nullable<Array<Nullable<Text>>>,
