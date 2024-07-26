@@ -17,6 +17,9 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 
 pub trait RecipeTrait {}
+impl RecipeTrait for NewRecipe {}
+impl RecipeTrait for NewIngredient {}
+impl RecipeTrait for NewStep {}
 impl RecipeTrait for FullRecipe {}
 impl RecipeTrait for Recipe {}
 impl RecipeTrait for Ingredient {}
@@ -101,8 +104,8 @@ pub struct Ingredient {
 impl Default for Ingredient {
     fn default() -> Self {
         Ingredient {
-            id: 0,
-            recipe_id: 0,
+            id: -1,
+            recipe_id: -1,
             ingredient_name: String::new(),
             ingredient_quantity: 0,
             quantity_unit: String::new(),
@@ -161,8 +164,8 @@ pub struct Recipe {
 impl Default for Recipe {
     fn default() -> Self {
         Recipe {
-            id: 0,
-            user_id: 0,
+            id: -1,
+            user_id: -1,
             recipe_name: String::new(),
             recipe_observations: None,
         }
@@ -207,7 +210,7 @@ pub struct NewRecipe {
 impl Default for NewRecipe {
     fn default() -> Self {
         Self {
-            user_id: 0,
+            user_id: -1,
             recipe_name: String::new(),
             recipe_observations: None,
         }
@@ -399,6 +402,15 @@ impl Default for NewUser {
         }
     }
 }
+impl NewUser {
+    /// Password validation function
+    ///
+    /// # TODO
+    /// create Regex pwd validation    
+    pub fn validate(&self, pwd: &str) -> Result<String, IOError> {
+        return Ok(pwd.into());
+    }
+}
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[cfg_attr(
     not(target_arch = "wasm32"),
@@ -416,7 +428,7 @@ pub struct User {
 impl Default for User {
     fn default() -> Self {
         User {
-            id: 0,
+            id: -1,
             user_name: String::new(),
             user_role: UserRole::User,
             user_pwd: String::new(),
@@ -427,10 +439,6 @@ impl User {
     /// modify Steps inside FullRecipe
     pub fn set_id(&mut self, user_id: i32) {
         self.id = user_id
-    }
-    /// Password validation function
-    pub fn validate(&self, pwd: &str) -> Result<String, IOError> {
-        return Ok(pwd.into());
     }
 }
 
@@ -475,6 +483,9 @@ impl FromSql<Text, Pg> for UserRole {
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
+/// Types of query that can be received from user as param
+///
+/// ex: https://.../?name=<RecipeName>
 pub struct UrlRecipeQuery {
     pub id: Option<i32>,
     pub name: Option<String>,

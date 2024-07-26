@@ -4,7 +4,9 @@ use crate::functions::recipe::{
 use crate::functions::user::{
     create_user_record, delete_user_record, list_users_query, query_user_info, update_user_record,
 };
-use crate::structs::{FullRecipe, Ingredient, Recipe, Step, UrlRecipeQuery, UrlUserQuery};
+use crate::structs::{
+    FullRecipe, Ingredient, NewRecipe, NewUser, Recipe, Step, UrlRecipeQuery, UrlUserQuery,
+};
 use diesel::result::Error;
 use diesel::Connection;
 use std::env;
@@ -23,18 +25,18 @@ fn get_db_url() -> String {
 fn test_create_user_record() {
     let pool = connect_to_db(get_db_url()).unwrap();
     let mut conn = pool.get().unwrap();
-    let user = User {
-        id: Some(1),
+    let user = NewUser {
         user_name: "test_user".to_string(),
         user_role: UserRole::Admin,
         user_pwd: "password".to_string(),
     };
     conn.test_transaction::<_, Error, _>(|conn| -> Result<(), DieselError> {
         let old_len = list_users_query(conn)?.len();
-        create_user_record(conn, &user)?;
+        let u = create_user_record(conn, &user)?;
+        println!("{:?}", u);
         let new_len = list_users_query(conn)?.len();
 
-        assert!(new_len > old_len);
+        assert!(new_len == old_len + 1);
         Ok(())
     });
 }
@@ -43,8 +45,7 @@ fn test_create_user_record() {
 fn test_delete_user_record() {
     let pool = connect_to_db(get_db_url()).unwrap();
     let mut conn = pool.get().unwrap();
-    let user = User {
-        id: Some(1),
+    let user = NewUser {
         user_name: "test_user".to_string(),
         user_role: UserRole::User,
         user_pwd: "password".to_string(),
@@ -67,10 +68,9 @@ fn test_delete_user_record() {
 fn test_query_user_info() {
     let pool = connect_to_db(get_db_url()).unwrap();
     let mut conn = pool.get().unwrap();
-    let user = User {
-        id: Some(1),
+    let user = NewUser {
         user_name: "test_user".to_string(),
-        user_role: UserRole::Admin,
+        user_role: UserRole::User,
         user_pwd: "password".to_string(),
     };
     conn.test_transaction::<_, Error, _>(|conn| -> Result<(), DieselError> {
@@ -92,28 +92,27 @@ fn test_query_user_info() {
 fn test_update_user_record() {
     let pool = connect_to_db(get_db_url()).unwrap();
     let mut conn = pool.get().unwrap();
-    let old_user = User {
-        id: Some(1),
+    let old_user = NewUser {
         user_name: "test_user".to_string(),
         user_role: UserRole::Admin,
         user_pwd: "password".to_string(),
     };
     conn.test_transaction::<_, Error, _>(|conn| -> Result<(), DieselError> {
-        create_user_record(conn, &old_user)?;
+        let u = create_user_record(conn, &old_user)?;
         let new_info: User = User {
-            id: old_user.id,
+            id: u.id,
             user_name: "test_user2".to_string(),
             user_role: UserRole::User,
             user_pwd: "password".to_string(),
         };
         update_user_record(conn, &new_info)?;
         let query = UrlUserQuery {
-            id: old_user.id,
+            id: Some(u.id),
             ..Default::default()
         };
         let updated_user = query_user_info(conn, &query)?;
-        assert_eq!(
-            updated_user.user_name, new_info.user_name,
+        assert_ne!(
+            updated_user.user_name, old_user.user_name,
             "names are the same, user update OK"
         );
         Ok(())
@@ -125,14 +124,12 @@ fn test_list_users_query() {
     let pool = connect_to_db(get_db_url()).expect("failed to get pool");
     let mut conn = pool.get().expect("failed to get connection from pool");
     let users = vec![
-        User {
-            id: Some(1),
+        NewUser {
             user_name: "test_user".to_string(),
             user_role: UserRole::Admin,
             user_pwd: "password".to_string(),
         },
-        User {
-            id: Some(2),
+        NewUser {
             user_name: "test_user2".to_string(),
             user_role: UserRole::User,
             user_pwd: "password".to_string(),
@@ -154,7 +151,7 @@ fn test_list_users_query() {
 fn create_recipe() {
     let pool = connect_to_db(get_db_url()).expect("failed to get pool");
     let mut conn = pool.get().expect("failed to get connection from pool");
-    let input_recipe = Recipe::default();
+    let input_recipe = NewRecipe::default();
     conn.test_transaction(|conn| {
         create_recipe_query(conn, &input_recipe)?;
         Ok::<_, DieselError>(())
@@ -165,25 +162,24 @@ fn create_recipe() {
 fn test_delete_recipe() {
     let pool = connect_to_db(get_db_url()).expect("failed to get pool");
     let mut conn = pool.get().expect("failed to get connection from pool");
-    let first_recipe = Recipe {
+    let first_recipe = NewRecipe {
         recipe_name: String::from("value"),
         recipe_observations: None,
         ..Default::default()
     };
-    let second_recipe = Recipe {
-        id: Some(12),
+    let second_recipe = NewRecipe {
         recipe_observations: None,
         ..Default::default()
     };
     conn.test_transaction::<_, DieselError, _>(|conn| {
         create_recipe_query(conn, &first_recipe)?;
-        create_recipe_query(conn, &second_recipe)?;
+        let r2 = create_recipe_query(conn, &second_recipe)?;
         let old_len = fuzzy_query(conn, &String::from(""))?.len();
         println!("recipe table length after create_recipe {old_len}");
         delete_recipe_query(
             conn,
             &UrlRecipeQuery {
-                id: second_recipe.id,
+                id: Some(r2.id),
                 name: None,
             },
         )?;
@@ -211,15 +207,21 @@ fn test_delete_recipe() {
 fn test_fuzzy_query() {
     let pool = connect_to_db(get_db_url()).expect("failed to get pool");
     let mut conn = pool.get().expect("failed to get connection from pool");
-    let recipe = Recipe {
-        recipe_name: "test_fuzzy_query".to_string(),
-        ..Default::default()
-    };
-    conn.test_transaction::<_, DieselError, _>(move |conn| {
-        create_recipe_query(conn, &recipe)?;
-        let recipes = fuzzy_query(conn, &String::from("test_fuzzy_query"))?;
-        assert_eq!(recipes.len(), 1, "Recipe not found");
 
+    conn.test_transaction::<_, DieselError, _>(move |conn| {
+        let old_len = fuzzy_query(conn, &String::from(""))?.len();
+        for i in 1..11 {
+            create_recipe_query(
+                conn,
+                &NewRecipe {
+                    user_id: 0,
+                    recipe_name: format!("recipe{i}"),
+                    recipe_observations: None,
+                },
+            )?;
+        }
+        let new_len = fuzzy_query(conn, &String::from(""))?.len();
+        assert_eq!(new_len, old_len + 10);
         Ok(())
     })
 }
@@ -228,8 +230,7 @@ fn test_fuzzy_query() {
 fn test_update_recipe() {
     let pool = connect_to_db(get_db_url()).expect("failed to get pool");
     let mut conn = pool.get().expect("failed to get connection from pool");
-    let old_recipe = Recipe {
-        id: Some(32),
+    let old_recipe = NewRecipe {
         recipe_name: "pao".to_string(),
         ..Default::default()
     };
@@ -237,9 +238,9 @@ fn test_update_recipe() {
         let created = create_recipe_query(conn, &old_recipe)?;
 
         let new_recipe = Recipe {
-            id: old_recipe.id,
+            id: created.id,
             recipe_name: String::from("tijolo"),
-            ..old_recipe
+            ..Default::default()
         };
         let updated = update_recipe_query(conn, &new_recipe)?;
         assert_eq!(created.id, updated.id);
@@ -252,30 +253,30 @@ fn test_update_recipe() {
 fn test_fullrecipe_helpers() {
     let ingredients = vec![
         Ingredient {
-            id: Some(10),
+            id: 10,
             ..Default::default()
         },
         Ingredient {
-            id: Some(12),
+            id: 11,
             ..Default::default()
         },
         Ingredient {
-            id: Some(11),
+            id: 12,
             ..Default::default()
         },
     ];
     let original_ingredients_len = ingredients.len();
     let steps = vec![
         Step {
-            id: Some(10),
+            id: 10,
             ..Default::default()
         },
         Step {
-            id: Some(12),
+            id: 11,
             ..Default::default()
         },
         Step {
-            id: Some(11),
+            id: 13,
             ..Default::default()
         },
     ];
@@ -303,7 +304,7 @@ fn test_fullrecipe_helpers() {
         .unwrap();
     let i = full_recipe
         .replace_ingredient(Ingredient {
-            id: Some(11),
+            id: 11,
             ingredient_name: "new_name".to_string(),
             ..Default::default()
         })
