@@ -1,7 +1,4 @@
-use crate::schema::recipe_ingredient::dsl as ingredient_dsl;
-use crate::schema::recipe_step::dsl as step_dsl;
 use crate::structs::{NewRecipe, UrlRecipeQuery};
-use crate::{schema::recipe::dsl as recipe_dsl, structs::Ingredient};
 
 use diesel::prelude::*;
 use diesel::result::DatabaseErrorKind;
@@ -16,6 +13,7 @@ pub fn query_recipe(
     conn: &mut PooledPgConnection,
     incoming_recipe: UrlRecipeQuery,
 ) -> Result<Recipe, DieselError> {
+    use crate::schema::recipe::dsl as recipe_dsl;
     if let Some(input_id) = &incoming_recipe.id {
         Ok(recipe_dsl::recipe
             .select((
@@ -43,10 +41,12 @@ pub fn query_recipe(
         ))
     }
 }
+
 pub fn create_recipe_query(
     conn: &mut PooledPgConnection,
     incoming_recipe: &NewRecipe,
 ) -> Result<Recipe, DieselError> {
+    use crate::schema::recipe::dsl as recipe_dsl;
     diesel::insert_into(recipe_dsl::recipe)
         .values(incoming_recipe.clone())
         .execute(conn)?;
@@ -64,6 +64,7 @@ pub fn delete_recipe_query(
     conn: &mut PooledPgConnection,
     incoming_recipe: &UrlRecipeQuery,
 ) -> Result<usize, DieselError> {
+    use crate::schema::recipe::dsl as recipe_dsl;
     if let Some(input_id) = &incoming_recipe.id {
         Ok(diesel::delete(recipe_dsl::recipe)
             .filter(recipe_dsl::id.eq(input_id))
@@ -90,6 +91,9 @@ pub fn query_full_recipe(
     conn: &mut PooledPgConnection,
     incoming_query: &UrlRecipeQuery,
 ) -> Result<FullRecipe, DieselError> {
+    use crate::schema::recipe_ingredient::dsl as ingredient_dsl;
+    use crate::schema::recipe_step::dsl as step_dsl;
+    use crate::{schema::recipe::dsl as recipe_dsl, structs::Ingredient};
     let mut full_recipe = FullRecipe::default();
     // creating a Recipe
     // conditionally set recipe based on URL query
@@ -123,6 +127,7 @@ pub fn fuzzy_query(
     conn: &mut PooledPgConnection,
     recipe_name: &String,
 ) -> Result<Vec<Recipe>, DieselError> {
+    use crate::schema::recipe::dsl as recipe_dsl;
     Ok(recipe_dsl::recipe
         .filter(recipe_dsl::recipe_name.like(format!("{:}%", recipe_name)))
         .get_results(conn)?)
@@ -133,6 +138,7 @@ pub fn update_recipe_query(
     conn: &mut PooledPgConnection,
     incoming_recipe: &Recipe,
 ) -> Result<Recipe, DieselError> {
+    use crate::schema::recipe::dsl as recipe_dsl;
     Ok(diesel::update(recipe_dsl::recipe)
         .filter(recipe_dsl::id.eq(incoming_recipe.id))
         .set(incoming_recipe)
