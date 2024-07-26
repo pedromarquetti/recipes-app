@@ -15,16 +15,15 @@ use db::{
         create_user_record, delete_user_record, list_users_query, query_user_info,
         update_user_record,
     },
-    structs::{UrlUserQuery, User, UserRole},
+    structs::{NewUser, UrlUserQuery, User, UserRole},
 };
 
-pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
+pub async fn create_user(db_conn: DbConnection, user: NewUser) -> Result<impl Reply, Rejection> {
     let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
     match user.validate(&user.user_pwd) {
         Ok(_) => {
-            let user = User {
-                id: user.id,
+            let user = NewUser {
                 user_name: user.user_name,
                 user_role: user.user_role,
                 // encrypting password
@@ -98,7 +97,7 @@ pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl 
     let query = query_user_info(
         &mut conn,
         &UrlUserQuery {
-            id: user.id,
+            id: Some(user.id),
             name: Some(user.user_name),
         },
     )
@@ -141,7 +140,7 @@ pub async fn update_user_info_route(
     let usr = query_user_info(
         &mut conn,
         &UrlUserQuery {
-            id: user.id,
+            id: Some(user.id),
             name: Some(user.user_name.clone()),
         },
     )
@@ -192,7 +191,6 @@ fn check_user_permission(user: &User, claims: Option<UserClaims>) -> bool {
     if claims.is_none()
         || user
             .id
-            .expect("expected valid User ID")
             .ne(&claims.as_ref().expect("expected valid TOKEN").user_id)
     {
         // return false if no token found OR user id != claim

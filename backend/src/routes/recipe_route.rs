@@ -11,30 +11,26 @@ use db::{
         create_recipe_query, delete_recipe_query, fuzzy_query, query_full_recipe,
         update_recipe_query,
     },
-    structs::{Recipe, UrlRecipeQuery},
+    structs::{NewRecipe, Recipe, UrlRecipeQuery},
 };
 
 use super::validate_permission;
 
 pub async fn create_recipe(
-    mut recipe: Recipe,
+    recipe: NewRecipe,
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
-    // if user is logged in...
-    if let Some(claims) = user_claims {
-        // set user_id
-        recipe.set_user_id(claims.user_id)
+    if validate_permission(recipe.user_id, user_claims) {
+        return Ok(warp::reply::json(
+            // sending query to db
+            &create_recipe_query(&mut conn, &recipe).map_err(convert_to_rejection)?,
+        ));
     } else {
         return Err(Error::user_error("User not logged in", StatusCode::UNAUTHORIZED).into());
     }
-
-    Ok(warp::reply::json(
-        // sending query to db
-        &create_recipe_query(&mut conn, &recipe).map_err(convert_to_rejection)?,
-    ))
 }
 
 pub async fn delete_recipe(
@@ -67,9 +63,6 @@ pub async fn view_recipe(
     incoming_query: UrlRecipeQuery,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    if incoming_query.id.is_none() && incoming_query.name.is_none() {
-        return Err(Error::payload_error("name or id must be supplied!").into());
-    }
     let mut conn = db_connection.map_err(convert_to_rejection)?;
     return Ok(warp::reply::json(
         &query_full_recipe(&mut conn, &incoming_query).map_err(convert_to_rejection)?,
@@ -96,16 +89,13 @@ pub async fn update_recipe(
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
-    if incoming_recipe.id.is_none() {
-        return Err(Error::payload_error("Insert a recipe name!").into());
-    }
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
     // querying recipe so we can validate ownership
     let recipe = query_full_recipe(
         &mut conn,
         &UrlRecipeQuery {
-            id: incoming_recipe.id,
+            id: Some(incoming_recipe.id),
             name: None,
         },
     )

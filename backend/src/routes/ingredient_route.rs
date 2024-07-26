@@ -5,7 +5,7 @@ use crate::{
 use db::{
     db_pool::{DbConnection, PooledPgConnection},
     functions::{recipe::query_full_recipe, recipe_ingredient::*},
-    structs::{Ingredient, Recipe, UrlRecipeQuery},
+    structs::{Ingredient, NewIngredient, Recipe, UrlRecipeQuery},
 };
 use serde_json::json;
 use warp::{http::StatusCode, Rejection, Reply};
@@ -15,7 +15,7 @@ use super::validate_permission;
 /// Backend ingredient creator endpoint function
 pub async fn create_ingredient(
     db_conn: DbConnection,
-    ingredients: Vec<Ingredient>,
+    ingredients: Vec<NewIngredient>,
     claims: Option<UserClaims>,
 ) -> Result<impl Reply, Rejection> {
     let mut conn = db_conn.map_err(convert_to_rejection)?;
@@ -25,7 +25,7 @@ pub async fn create_ingredient(
     let recipe = query_full_recipe(
         &mut conn,
         &UrlRecipeQuery {
-            id: r.id,
+            id: Some(r.id),
             name: None,
         },
     )
@@ -47,18 +47,15 @@ pub async fn update_ingredient(
     ingredient: Ingredient,
     claims: Option<UserClaims>,
 ) -> Result<impl Reply, Rejection> {
-    if ingredient.id.is_none() {
-        return Err(Error::payload_error("missing ingredient ID field").into());
-    }
-
     let mut conn = db_connection.map_err(convert_to_rejection)?;
 
     let mut r = Recipe::default();
     r.set_id(ingredient.recipe_id);
+
     let recipe = query_full_recipe(
         &mut conn,
         &UrlRecipeQuery {
-            id: r.id,
+            id: Some(r.id),
             name: None,
         },
     )
