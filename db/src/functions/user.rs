@@ -1,4 +1,7 @@
-use crate::{schema::recipe_users::dsl as user_dsl, structs::UrlUserQuery};
+use crate::{
+    schema::recipe_users::dsl as user_dsl,
+    structs::{NewUser, UrlUserQuery},
+};
 use diesel::prelude::*;
 
 use crate::{
@@ -13,12 +16,20 @@ pub fn get_user_name(conn: &mut PooledPgConnection, user_id: i32) -> Result<Stri
         .first::<String>(conn)?)
 }
 
-pub fn create_user_record(conn: &mut PooledPgConnection, user: &User) -> Result<(), DieselError> {
-    use crate::schema::recipe_users;
-    diesel::insert_into(recipe_users::table)
-        .values::<&User>(&user)
+pub fn create_user_record(
+    conn: &mut PooledPgConnection,
+    user: &NewUser,
+) -> Result<User, DieselError> {
+    diesel::insert_into(user_dsl::recipe_users)
+        .values(user.clone())
         .execute(conn)?;
-    Ok(())
+    Ok(query_user_info(
+        conn,
+        &UrlUserQuery {
+            id: None,
+            name: Some(user.user_name.clone()),
+        },
+    )?)
 }
 
 pub fn delete_user_record(
