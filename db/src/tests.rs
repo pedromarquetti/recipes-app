@@ -151,9 +151,14 @@ fn test_list_users_query() {
 fn create_recipe() {
     let pool = connect_to_db(get_db_url()).expect("failed to get pool");
     let mut conn = pool.get().expect("failed to get connection from pool");
-    let input_recipe = NewRecipe::default();
+    let input_recipe = NewRecipe {
+        user_id: 0,
+        recipe_name: "teste".to_string(),
+        ..Default::default()
+    };
     conn.test_transaction(|conn| {
-        create_recipe_query(conn, &input_recipe)?;
+        let r = create_recipe_query(conn, &input_recipe)?;
+        assert_eq!(r.recipe_name, input_recipe.recipe_name);
         Ok::<_, DieselError>(())
     })
 }
@@ -164,11 +169,13 @@ fn test_delete_recipe() {
     let mut conn = pool.get().expect("failed to get connection from pool");
     let first_recipe = NewRecipe {
         recipe_name: String::from("value"),
-        recipe_observations: None,
+
+        user_id: 0,
         ..Default::default()
     };
     let second_recipe = NewRecipe {
         recipe_observations: None,
+        user_id: 0,
         ..Default::default()
     };
     conn.test_transaction::<_, DieselError, _>(|conn| {
@@ -232,6 +239,7 @@ fn test_update_recipe() {
     let mut conn = pool.get().expect("failed to get connection from pool");
     let old_recipe = NewRecipe {
         recipe_name: "pao".to_string(),
+        user_id: 0,
         ..Default::default()
     };
     conn.test_transaction::<_, DieselError, _>(move |conn| {
@@ -240,7 +248,7 @@ fn test_update_recipe() {
         let new_recipe = Recipe {
             id: created.id,
             recipe_name: String::from("tijolo"),
-            ..Default::default()
+            ..created
         };
         let updated = update_recipe_query(conn, &new_recipe)?;
         assert_eq!(created.id, updated.id);
