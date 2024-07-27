@@ -207,6 +207,11 @@ pub struct NewRecipe {
     pub recipe_name: String,
     pub recipe_observations: Option<Vec<Option<String>>>,
 }
+impl NewRecipe {
+    pub fn set_user_id(&mut self, id: i32) {
+        self.user_id = id;
+    }
+}
 impl Default for NewRecipe {
     fn default() -> Self {
         Self {

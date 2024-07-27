@@ -17,12 +17,14 @@ use db::{
 use super::validate_permission;
 
 pub async fn create_recipe(
-    recipe: NewRecipe,
+    mut recipe: NewRecipe,
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
-
+    if let Some(claims) = user_claims.clone() {
+        recipe.set_user_id(claims.user_id)
+    }
     if validate_permission(recipe.user_id, user_claims) {
         return Ok(warp::reply::json(
             // sending query to db
