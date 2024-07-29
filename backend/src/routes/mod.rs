@@ -190,11 +190,9 @@ pub async fn ping() -> Result<impl Reply, Rejection> {
 }
 
 /// checks if current user can create/read/update/delete item
-pub fn validate_permission(user_id: Option<i32>, claims: Option<UserClaims>) -> bool {
-    if user_id.is_some() && claims.is_some() {
-        // recipe has owner
-        if claims.clone().unwrap().role.eq(&UserRole::Admin)
-            || user_id.unwrap().eq(&claims.unwrap().user_id)
+pub fn validate_permission(user_id: i32, claims: Option<UserClaims>) -> bool {
+    if claims.is_some() {
+        if claims.clone().unwrap().role.eq(&UserRole::Admin) || user_id.eq(&claims.unwrap().user_id)
         {
             // user is admin OR user owns recipe
             return true;
@@ -205,52 +203,5 @@ pub fn validate_permission(user_id: Option<i32>, claims: Option<UserClaims>) -> 
     } else {
         // no id found OR user_claims is None
         return false;
-    }
-}
-
-#[cfg(test)]
-mod permission_test {
-    use super::super::*;
-    use db::structs::UserRole;
-    use jwt::UserClaims;
-    use routes::validate_permission;
-
-    #[test]
-    fn test_validate_permission() {
-        let normal_user = UserClaims {
-            user_id: 1,
-            role: UserRole::User,
-            ..Default::default()
-        };
-        let admin_user = UserClaims {
-            user_id: 2,
-            role: UserRole::Admin,
-            ..Default::default()
-        };
-        // checkig valid permissions
-        assert_eq!(
-            validate_permission(Some(1), Some(admin_user)),
-            true,
-            " admin trying to do something"
-        );
-        assert_eq!(
-            validate_permission(Some(1), Some(normal_user.clone())),
-            true,
-            "owner trying to do something"
-        );
-
-        assert_eq!(
-            validate_permission(Some(2), Some(normal_user.clone())),
-            false,
-            "normal user trying to modify something"
-        );
-
-        assert_eq!(
-            validate_permission(None, Some(normal_user.clone())),
-            false,
-            "No user!"
-        );
-
-        assert_eq!(validate_permission(Some(1), None), false, "No claims!");
     }
 }

@@ -1,5 +1,5 @@
 use db::structs::Ingredient;
-use log::{error, info};
+use log::error;
 use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
 
@@ -48,7 +48,6 @@ pub fn ingredient_component(props: &ItemProps<Ingredient>) -> Html {
                 match delete_ingredient(&ingredient).await {
                     Ok(ok_fetch) => match ok_fetch {
                         ApiResponse::ApiMessage(msg) => {
-                            info!("API message: {:?}", msg);
                             curr_focus.emit((RecipeMode::Delete, ingredient));
 
                             use_notification.spawn(Notification::new(

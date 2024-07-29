@@ -1,5 +1,5 @@
-use db::structs::User;
-use log::{error, info};
+use db::structs::NewUser;
+use log::error;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
@@ -34,7 +34,7 @@ pub fn user_register() -> Html {
                 .unwrap()
                 .value();
 
-            let mut usr = User::default();
+            let mut usr = NewUser::default();
             usr.user_name = user_name_ref;
             usr.user_pwd = user_pwd_ref;
 
@@ -51,7 +51,6 @@ pub fn user_register() -> Html {
                             ));
                         }
                         ApiResponse::ApiMessage(msg) => {
-                            info!("API message: {:?}", msg);
                             use_notification.spawn(Notification::new(
                                 yew_notifications::NotificationType::Info,
                                 "Sucess",

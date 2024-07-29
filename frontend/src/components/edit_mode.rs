@@ -16,7 +16,7 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 use db::structs::{FullRecipe, Ingredient, Step};
-use log::{error, info};
+use log::error;
 use yew::platform::spawn_local;
 use yew_notifications::{use_notification, Notification};
 use yew_router::hooks::use_navigator;
@@ -183,7 +183,6 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
                         // handling API Response
                         match ok_fetch {
                             ApiResponse::ApiMessage(msg) => {
-                                info!("API message: {:?}", msg);
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
@@ -233,11 +232,10 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
             let use_notification = use_notification.clone();
             spawn_local(async move {
                 let recipe = recipe.clone();
-                match delete_recipe(&recipe.id).await {
+                match delete_recipe(recipe.id).await {
                     Ok(api_res) => {
                         match api_res {
                             ApiResponse::ApiMessage(msg) => {
-                                info!("API message: {:?}", msg);
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
@@ -277,7 +275,6 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         <h1>{format!("Editing recipe {}",recipe.recipe_name)}</h1>
         <div class="edit-container">
         <form onsubmit={handle_rename}>
-
             <Input
                     input_node_ref={new_name_ref}
                     is_required={true}
@@ -289,13 +286,13 @@ pub fn edit_recipe(props: &EditRecipeProps) -> Html {
         </form>
 
         <EditStep
-        recipe_id={recipe_state.clone().recipe.id.unwrap_or_default()}
-        callback={step_cb}
+        recipe_id={recipe_state.clone().recipe.id}
         old_part={step_to_edit.clone()}
+        callback={step_cb}
         />
 
         <EditIngredient
-        recipe_id={recipe_state.clone().recipe.id.unwrap_or_default()}
+        recipe_id={recipe_state.clone().recipe.id}
         old_part={ingredient_to_edit.clone()}
         callback={ingredient_cb}
         />

@@ -2,12 +2,13 @@ use db::structs::{FullRecipe, Ingredient, Step};
 use yew::{platform::spawn_local, prelude::*};
 use yew_notifications::{use_notification, Notification};
 
-use crate::{views::new_recipe::NewRecipe,
+use crate::{
     components::{
         edit_mode::EditRecipe, ingredient_component::IngredientItem, recipe_title::RecipeTitle,
         steps_component::StepItem,
     },
     functions::{recipe_functions::check_edit_permission, ApiResponse},
+    views::new_recipe::NewRecipeComponent,
     DEFAULT_NOTIFICATION_DURATION,
 };
 
@@ -17,23 +18,22 @@ use super::{ItemProps, RecipeMode};
 pub struct RecipeProps {
     pub full_recipe: FullRecipe,
     #[prop_or(RecipeMode::View)]
-    pub mode:RecipeMode
+    pub mode: RecipeMode,
 }
 
 #[function_component(RecipeComponent)]
 /// Base Recipe component
 pub fn recipe_component(props: &RecipeProps) -> Html {
-    let RecipeProps { full_recipe, mode }=props;
+    let RecipeProps { full_recipe, mode } = props;
     let recipe_state = use_state(|| full_recipe.clone());
-    let use_notification = use_notification::<Notification>();    
-    let ingredient_to_edit = use_state(||Ingredient::default());
-    let step_to_edit = use_state(||Step::default());
-    let mode_state = use_state(||mode.clone());
+    let use_notification = use_notification::<Notification>();
+    let ingredient_to_edit = use_state(|| Ingredient::default());
+    let step_to_edit = use_state(|| Step::default());
+    let mode_state = use_state(|| mode.clone());
     let edit_mode = use_state(|| false);
-    
+
     // let full_recipe = (*recipe_state).clone();
     let full_recipe = recipe_state.clone();
-    
 
     let recipe = full_recipe.recipe.clone();
     let ingredients = full_recipe.ingredients.clone();
@@ -46,11 +46,11 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
         let mode_state = mode_state.clone();
         Callback::from(move |_| {
             let edit_mode = edit_mode.clone();
-            let mode_state =mode_state.clone();
+            let mode_state = mode_state.clone();
             let use_notification = use_notification.clone();
             spawn_local(async move {
                 let mode_state = mode_state.clone();
-                match check_edit_permission(&recipe.id.unwrap_or(-1)).await {
+                match check_edit_permission(&recipe.id).await {
                     Ok(ok_fetch) => match ok_fetch {
                         ApiResponse::ApiError(err) => {
                             use_notification.spawn(Notification::new(
@@ -63,7 +63,6 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                         ApiResponse::ApiMessage(_) => {
                             edit_mode.set(true);
                             mode_state.set(RecipeMode::Edit);
-
                         }
                         _ => {}
                     },
@@ -89,7 +88,7 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
         }
             <RecipeTitle owner={full_recipe.recipe_owner_name.clone()} title={recipe.recipe_name}/>
 
-            <IngredientList 
+            <IngredientList
             curr_focus={{
                 let ingredient_to_edit = ingredient_to_edit.clone();
                 let recipe_state = recipe_state.clone();
@@ -105,10 +104,10 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                             let recipe_state = recipe_state.clone();
                             let use_notification = use_notification.clone();
                             let mut recipe = (*recipe_state).clone();
-                            let recipe = recipe.remove_ingredient(ingredient.id.unwrap_or(-1));
+                            let recipe = recipe.remove_ingredient(ingredient.id);
                             match recipe {
                                 Ok(i)=>{
-                                    recipe_state.set(FullRecipe { 
+                                    recipe_state.set(FullRecipe {
                                         ingredients:i,
                                         ..(*recipe_state).clone()
                                     })
@@ -127,12 +126,12 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                         _=>{}
                     }
                 })
-            }} 
-            mode={(*mode_state).clone()} 
+            }}
+            mode={(*mode_state).clone()}
             item_list={ingredients}
             />
-            
-            <StepList 
+
+            <StepList
             curr_focus={{
                 let step_to_edit=step_to_edit.clone();
                 let recipe_state = recipe_state.clone();
@@ -145,7 +144,7 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
                         let recipe_state = recipe_state.clone();
                         let use_notification = use_notification.clone();
                         let mut recipe = (*recipe_state).clone();
-                        let recipe = recipe.remove_step(step.id.unwrap_or(-1));
+                        let recipe = recipe.remove_step(step.id);
                         match recipe {
                             Ok(s)=>{
                                 recipe_state.set(FullRecipe {
@@ -195,7 +194,7 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
         }
             RecipeMode::New=>{
                 html!{
-                <NewRecipe
+                <NewRecipeComponent
                 full_recipe={(*full_recipe).clone()}
                 new_recipe_cb={
                     Callback::from(move |edited_recipe:FullRecipe|{
@@ -215,12 +214,11 @@ pub fn recipe_component(props: &RecipeProps) -> Html {
 
 #[function_component(StepList)]
 pub fn step_list(props: &ItemProps<Step>) -> Html {
-    
-    let ItemProps { 
+    let ItemProps {
         item_list,
-        curr_focus, 
+        curr_focus,
         mode,
-        item :_
+        item: _,
     } = props;
     let l: Vec<Html> = item_list
         .iter()
@@ -229,10 +227,10 @@ pub fn step_list(props: &ItemProps<Step>) -> Html {
             // note: calling unwrap on step.id because step will always receive an id
             html! {
                 <li id={
-                    format!("step-{}",step.id.unwrap_or(item_list.len().try_into().expect("invalid len()")))
+                    format!("step-{}",step.id)
                 } class="step">
-                    <StepItem 
-                        {mode} 
+                    <StepItem
+                        {mode}
                         {curr_focus}
                         item={step.clone()}/>
                 </li>
@@ -255,26 +253,26 @@ pub fn step_list(props: &ItemProps<Step>) -> Html {
 ///
 /// Uses a vec![Ingredient] as a prop.
 pub fn ingredients_list(props: &ItemProps<Ingredient>) -> Html {
-    let ItemProps { 
+    let ItemProps {
         item_list,
-        curr_focus, 
+        curr_focus,
         mode,
-        item :_
+        item: _,
     } = props;
 
     let ingredient_list: Vec<Html> = item_list
         .iter()
-        .map(|ingredient| {  
-            let mode= mode.clone();
+        .map(|ingredient| {
+            let mode = mode.clone();
             let item = ingredient.clone();
             html! {
             <>
-                <li id={format!{"ingredient-{}",ingredient.id.unwrap_or(item_list.len().try_into().expect("invalid len()"))}}>
-                
-                    <IngredientItem 
-                        {mode} 
+                <li id={format!{"ingredient-{}",ingredient.id}}>
+
+                    <IngredientItem
+                        {mode}
                         {curr_focus}
-                        {item} 
+                        {item}
                         />
                 </li>
                     </>

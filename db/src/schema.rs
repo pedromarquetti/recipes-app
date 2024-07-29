@@ -2,27 +2,31 @@
 
 diesel::table! {
     recipe (id) {
-        id -> Nullable<Int4>,
-        user_id -> Nullable<Int4>,
+        id -> Int4,
+        user_id -> Int4,
+        #[max_length = 100]
         recipe_name -> Varchar,
-        recipe_observations -> Nullable<Array<Text>>
+        recipe_observations -> Nullable<Array<Nullable<Text>>>,
     }
 }
 
 diesel::table! {
     recipe_ingredient (id) {
-        id -> Nullable<Int4>,
+        id -> Int4,
         recipe_id -> Int4,
+        #[max_length = 100]
         ingredient_name -> Varchar,
         ingredient_quantity -> Int4,
+        #[max_length = 10]
         quantity_unit -> Varchar,
     }
 }
 
 diesel::table! {
     recipe_step (id) {
-        id -> Nullable<Int4>,
+        id -> Int4,
         recipe_id -> Int4,
+        #[max_length = 50]
         step_name -> Bpchar,
         step_instruction -> Text,
         step_duration_min -> Int4,
@@ -31,7 +35,7 @@ diesel::table! {
 
 diesel::table! {
     recipe_users (id) {
-        id -> Nullable<Int4>,
+        id -> Int4,
         user_name -> Varchar,
         user_pwd -> Text,
         user_role -> Text,

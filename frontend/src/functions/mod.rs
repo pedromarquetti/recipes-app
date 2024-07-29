@@ -20,7 +20,7 @@ where
     R: for<'a> Deserialize<'a> + RecipeTrait,
     M: for<'a> Deserialize<'a> + Display + Debug + PartialEq + Clone,
 {
-    OkRecipe(R),
+    OkPart(R),
     ApiMessage(M),
     ApiError(M),
 }
@@ -46,7 +46,7 @@ where
         ))
     } else {
         // if no key is found, the try parsing the response as a RecipeTrait
-        Ok(ApiResponse::OkRecipe(
+        Ok(ApiResponse::OkPart(
             serde_json::from_value::<R>(res).map_err(|e| GlooError::SerdeError(e))?,
         ))
     }

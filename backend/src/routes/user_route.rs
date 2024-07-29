@@ -1,9 +1,11 @@
+use crate::error::Error;
 use bcrypt::{hash, verify};
+
 use serde_json::json;
 use warp::{http::header::*, hyper::StatusCode, reject::Rejection, reply::Reply};
 
 use crate::{
-    error::{convert_to_rejection, Error},
+    error::convert_to_rejection,
     is_dev_server,
     jwt::{generate_token, UserClaims},
 };
@@ -13,23 +15,22 @@ use db::{
         create_user_record, delete_user_record, list_users_query, query_user_info,
         update_user_record,
     },
-    structs::{UrlUserQuery, User, UserRole},
+    structs::{NewUser, UrlUserQuery, User, UserRole},
 };
 
-pub async fn create_user(db_conn: DbConnection, user: User) -> Result<impl Reply, Rejection> {
-    let conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
+pub async fn create_user(db_conn: DbConnection, user: NewUser) -> Result<impl Reply, Rejection> {
+    let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
 
     match user.validate(&user.user_pwd) {
         Ok(_) => {
-            let user = User {
-                id: user.id,
+            let user = NewUser {
                 user_name: user.user_name,
                 user_role: user.user_role,
                 // encrypting password
                 user_pwd: encrypt_pwd(&user.user_pwd).await?,
             };
             // running query
-            create_user_record(conn, &user).map_err(convert_to_rejection)?;
+            create_user_record(&mut conn, &user).map_err(convert_to_rejection)?;
 
             Ok(warp::reply::json(&json!({
                 "msg": format!("user {} created", user.user_name)
@@ -61,8 +62,9 @@ pub async fn delete_user(
     // check if user can delete queried user (admins only) OR if user can delete themselves
     if check_user_permission(&usr, user_claims) {
         // running query
-        delete_user_record(conn, &user_query).map_err(convert_to_rejection)?;
-
+        if delete_user_record(&mut conn, &user_query).map_err(convert_to_rejection)? == 0 {
+            return Err(Error::not_found("User not found").into());
+        }
         return Ok(warp::reply::json(&json!({
             "msg": format!("user deleted")
         })));
@@ -95,7 +97,7 @@ pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl 
     let query = query_user_info(
         &mut conn,
         &UrlUserQuery {
-            id: user.id,
+            id: Some(user.id),
             name: Some(user.user_name),
         },
     )
@@ -138,7 +140,7 @@ pub async fn update_user_info_route(
     let usr = query_user_info(
         &mut conn,
         &UrlUserQuery {
-            id: user.id,
+            id: Some(user.id),
             name: Some(user.user_name.clone()),
         },
     )
@@ -189,7 +191,6 @@ fn check_user_permission(user: &User, claims: Option<UserClaims>) -> bool {
     if claims.is_none()
         || user
             .id
-            .expect("expected valid User ID")
             .ne(&claims.as_ref().expect("expected valid TOKEN").user_id)
     {
         // return false if no token found OR user id != claim

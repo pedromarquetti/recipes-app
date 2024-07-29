@@ -1,5 +1,7 @@
 # Welcome to my recipes Fullstack app
 
+![workflow status](https://github.com/pedromarquetti/recipes-app/actions/workflows/tests.yml/badge.svg)
+
 This is still a work in progress, since i'm learning Rust/Yew/Warp/Diesel as I code.
 
 ## Local development setup and dependencies

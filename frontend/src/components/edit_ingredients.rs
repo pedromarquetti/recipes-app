@@ -1,7 +1,7 @@
 use crate::{
     components::{
         input_component::{Input, InputType},
-        new_ingredient::NewIngredients,
+        new_ingredient::NewIngredientComponent,
         RecipePartProps,
     },
     functions::{recipe_functions::update_ingredient, ApiResponse},
@@ -37,7 +37,7 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
         use_effect_with(old_part.clone(), move |i: &Ingredient| {
             // setting ingredient_state
             state.set(i.clone());
-            if old_part.id.is_some() {
+            if old_part.id >= 0 {
                 mode.set(RecipeMode::Edit)
             } else {
                 mode.set(RecipeMode::View)
@@ -123,7 +123,7 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::OkRecipe(_) => {
+                            ApiResponse::OkPart(_) => {
                                 callback.emit((RecipeMode::Edit, ingredient));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
@@ -154,7 +154,7 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
     };
 
     html! {
-        <div class="new-ingredients">
+        <div >
 
     // conditionally redering NewIngredients
     {if *mode.clone() == RecipeMode::Edit || *mode.clone() == RecipeMode::View {
@@ -206,7 +206,7 @@ pub fn edit_ingredients(props: &RecipePartProps<Ingredient>) -> Html {
                 <h1>{"New Ingredient"}</h1>
 
                 // user wants to add new item
-                <NewIngredients
+                <NewIngredientComponent
                 old_part={Ingredient{
                     recipe_id:recipe_id.clone(),
                     ..Default::default()

@@ -29,7 +29,7 @@ impl Default for UserClaims {
 
 pub fn generate_token(user: User) -> Result<String, JWTError> {
     let claims = UserClaims {
-        user_id: user.id.expect("Expected USER ID"),
+        user_id: user.id,
         role: user.user_role,
         exp: 10000000000,
     };

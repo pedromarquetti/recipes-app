@@ -1,5 +1,5 @@
-use db::structs::{FullRecipe, Ingredient, Step};
-use log::{error, info};
+use db::structs::{FullRecipe, Ingredient, NewRecipe, Step};
+use log::error;
 use web_sys::HtmlInputElement;
 
 use yew::{platform::spawn_local, prelude::*};
@@ -8,8 +8,8 @@ use yew_router::prelude::*;
 use crate::{
     components::{
         input_component::{Input, InputType},
-        new_ingredient::NewIngredients,
-        new_step::NewSteps,
+        new_ingredient::NewIngredientComponent,
+        new_step::NewStepComponent,
     },
     functions::{
         recipe_functions::{create_recipe, delete_recipe},
@@ -29,7 +29,7 @@ pub struct NewRecipeProps {
     pub new_recipe_cb: Callback<FullRecipe>,
 }
 
-#[function_component(NewRecipe)]
+#[function_component(NewRecipeComponent)]
 /// Handles recipe creation
 pub fn new_recipe(props: &NewRecipeProps) -> Html {
     let NewRecipeProps {
@@ -110,28 +110,24 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
             let name = recipe_name
                 .cast::<HtmlInputElement>()
                 .expect("Invalid element!");
-
-            // creating a FullRecipe
-            let full_recipe = FullRecipe::default();
-            let mut full_recipe = full_recipe.clone();
-
-            // getting the Recipe from full_recipe
-            let mut recipe = full_recipe.recipe.clone();
-
-            recipe.set_name(name.value());
+            let new = NewRecipe {
+                recipe_name: name.value(),
+                ..Default::default()
+            };
 
             // making request to API backend
             spawn_local(async move {
-                match create_recipe(&recipe).await {
+                let new = new.clone();
+                match create_recipe(&new).await {
                     Ok(api_response) => match api_response {
-                        ApiResponse::OkRecipe(ok_recipe) => {
-                            info!("recipe created! {:?}", ok_recipe);
-                            full_recipe.set_recipe(ok_recipe.clone());
-                            recipe_state.set(full_recipe);
+                        ApiResponse::OkPart(ok_recipe) => {
+                            let mut f = FullRecipe::default();
+                            f.set_recipe(ok_recipe.clone());
+                            recipe_state.set(f);
                             use_notification.spawn(Notification::new(
                                 yew_notifications::NotificationType::Info,
                                 "Recipe created!",
-                                format!("recipe { } created! ", ok_recipe.recipe_name),
+                                format!("recipe {} created! ", ok_recipe.recipe_name),
                                 DEFAULT_NOTIFICATION_DURATION,
                             ));
                         }
@@ -145,7 +141,6 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
                             ));
                         }
                         ApiResponse::ApiMessage(msg) => {
-                            info!("{:?}", msg);
                             use_notification.spawn(Notification::new(
                                 yew_notifications::NotificationType::Info,
                                 "",
@@ -174,7 +169,7 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
         <h1>{"New Recipe"}</h1>
         {
         // only show new recipe form if recipe_state is_none()
-        if recipe_state.recipe.id.is_none() {
+        if recipe_state.recipe.id <0 {
         html! {
         <form {onsubmit} class="new-recipe">
             <Input
@@ -191,36 +186,36 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
 
         {
             // only show <IngredientList> if there's a valid recipe at recipe_state
-            if let Some(_) = recipe_state.recipe.id{
+            if  recipe_state.recipe.id >0{
             // TODO! add Observation component
 
             html! {
                 <>
                 <h1>{"New ingredient"}</h1>
-                <NewIngredients
+                <NewIngredientComponent
                 callback={ingredient_callback}
                 old_part={
                     {
                         Ingredient {
-                            recipe_id:(*recipe_state).clone().recipe.id.expect("expected valid recipe_id at new recipe part"),
+                            recipe_id:(*recipe_state).clone().recipe.id,
                             ..Default::default()
                         }
                     }
                 }
                 />
                 <h1>{"New Step"}</h1>
-                <NewSteps
+                <NewStepComponent
                 callback={step_callback}
                 old_part={
                     Step{
-                        recipe_id:(*recipe_state).clone().recipe.id.unwrap(),
+                        recipe_id:(*recipe_state).clone().recipe.id,
                         ..Default::default()
                     }
                 }/>
 
     <h6>
             {format!("Note: when done, just click Home or go to")}
-            <Link<Route> to={Route::Recipe {id:recipe_state.recipe.id.unwrap_or(1)}}>{
+            <Link<Route> to={Route::Recipe {id:recipe_state.recipe.id}}>{
                 format!("recipe {}",recipe_state.recipe.recipe_name)}
                 </Link<Route>>
 
@@ -234,7 +229,7 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
         let navigator = navigator.clone();
 
     spawn_local(async move {
-        match delete_recipe(&recipe_state.recipe.id).await {
+        match delete_recipe(recipe_state.recipe.id).await {
             Ok(ok_fetch)=>{
                 match ok_fetch{
                     ApiResponse::ApiError(err)=>{
@@ -247,7 +242,7 @@ pub fn new_recipe(props: &NewRecipeProps) -> Html {
                             ));
                         },
                     ApiResponse::ApiMessage(msg) => {
-                        info!("API message: {:?}", msg);
+
                         use_notification.spawn(Notification::new(
                         yew_notifications::NotificationType::Info,
                         "Sucess",

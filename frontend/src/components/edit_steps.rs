@@ -1,7 +1,7 @@
 use crate::{
     components::{
         input_component::{Input, InputType},
-        new_step::NewSteps,
+        new_step::NewStepComponent,
         RecipeMode,
     },
     functions::{recipe_functions::update_steps, ApiResponse},
@@ -39,7 +39,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
         use_effect_with(old_part.clone(), move |i: &Step| {
             // setting ingredient_state
             state.set(i.clone());
-            if old_part.id.is_some() {
+            if old_part.id >= 0 {
                 mode.set(RecipeMode::Edit)
             } else {
                 mode.set(RecipeMode::View)
@@ -123,7 +123,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::OkRecipe(_) => {
+                            ApiResponse::OkPart(_) => {
                                 callback.emit((RecipeMode::Edit, step));
                                 state.set(Default::default());
                                 use_notification.spawn(Notification::new(
@@ -154,7 +154,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
     };
 
     html! {
-    <div class="new-ingredients">
+    <div >
 
     // conditionally redering New Step
     {if *mode.clone() == RecipeMode::Edit || *mode.clone() == RecipeMode::View {
@@ -204,7 +204,7 @@ pub fn edit_step(props: &RecipePartProps<Step>) -> Html {
             <>
                 <h1>{"New Step"}</h1>
 
-            <NewSteps
+            <NewStepComponent
             old_part={Step {
                 recipe_id:recipe_id.clone(),
                 ..Default::default()

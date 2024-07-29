@@ -1,0 +1,35 @@
+name: Cargo test
+
+on: push
+
+env:
+  CARGO_TERM_COLOR: always
+  POSTGRES_DB: recipe_app
+  POSTGRES_PASSWORD: postgres
+
+jobs:
+  run-cargo-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_PASSWORD: ${{env.POSTGRES_PASSWORD}}
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - name: Check out repo code
+        uses: actions/checkout@v4
+
+      - name: set up Diesel
+        run: |
+          cargo install diesel_cli
+          cd db
+          diesel migration run
+
+      - name: Run tests
+        run: cargo test --verbose
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432"
