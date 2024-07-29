@@ -11,15 +11,6 @@ use crate::{
 
 use super::ItemProps;
 
-#[derive(Properties, PartialEq)]
-pub struct IngredientItemProp {
-    pub ingredient: Ingredient,
-    #[prop_or(false)]
-    pub edit_mode: bool,
-    #[prop_or_default]
-    pub curr_focus: Callback<Ingredient>,
-}
-
 #[function_component(IngredientItem)]
 /// Component used to represent a Ingredient item
 pub fn ingredient_component(props: &ItemProps<Ingredient>) -> Html {
@@ -84,7 +75,6 @@ pub fn ingredient_component(props: &ItemProps<Ingredient>) -> Html {
 
     html! {
         <div
-
         onmouseleave={{
             let focus_state = focus_state.clone();
             Callback::from(move |_| {

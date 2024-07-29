@@ -10,6 +10,7 @@ pub mod recipe_card_component;
 pub mod recipe_component;
 pub mod recipe_title;
 pub mod steps_component;
+pub mod units;
 
 use db::structs::RecipeTrait;
 use yew::prelude::*;

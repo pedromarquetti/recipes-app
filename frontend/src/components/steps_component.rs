@@ -10,14 +10,6 @@ use crate::{
 
 use super::ItemProps;
 
-#[derive(Properties, PartialEq)]
-pub struct StepProps {
-    pub step: Step,
-    #[prop_or(false)]
-    pub edit_mode: bool,
-    #[prop_or_default]
-    pub curr_focus: Callback<Step>,
-}
 #[function_component(StepItem)]
 /// Represents a base Step item
 pub fn step_component(props: &ItemProps<Step>) -> Html {

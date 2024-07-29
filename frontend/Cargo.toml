@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -16,6 +16,6 @@ log = "0.4"
 # fix for "wasm*-unknown-unknown targets are not supported by default"
 getrandom = { version = "0.2", features = ["js"] }
 db = { version = "*",path = "../db"}
-web-sys = {version = "0.3"}
+web-sys = {version = "0.3",features = ["HtmlFormElement"]}
 yew-notifications = { git = "https://github.com/TheBestTvarynka/yew-notifications.git", features = ["standard-notification"] }
 time = { version = "0.3", features = ["local-offset", "wasm-bindgen"] }
