@@ -37,7 +37,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
 
                     match fetch_recipe(&recipe_id).await {
                         Ok(ok_fetch) => match ok_fetch {
-                            ApiResponse::OkRecipe(ok_recipe) => {
+                            ApiResponse::OkPart(ok_recipe) => {
                                 recipe_state.set(ok_recipe);
                             }
                             ApiResponse::ApiError(err) => {
@@ -68,7 +68,7 @@ pub fn recipe_page(props: &RecipeProps) -> Html {
 
     match props.mode {
         RecipeMode::View => {
-            if recipe_state.recipe.id.is_some() {
+            if recipe_state.recipe.id > -1 {
                 html! {
                     <>
                         <RecipeComponent mode={RecipeMode::View} full_recipe={(*recipe_state).clone()}/>

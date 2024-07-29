@@ -18,7 +18,7 @@ pub fn recipe_card(RecipeProps { recipe }: &RecipeProps) -> Html {
             owner={String::new()} />
 
         <div class="card-interaction">
-            <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id.unwrap() }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>
+            <Link<Route> classes={"button"} to={Route::Recipe { id: recipe.id }} >{format!("Detailed view of '{}'",recipe.recipe_name)}</ Link<Route>>
         </div>
 
 

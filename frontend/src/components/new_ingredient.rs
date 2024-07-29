@@ -1,4 +1,4 @@
-use db::structs::Ingredient;
+use db::structs::{Ingredient, NewIngredient};
 use log::error;
 use web_sys::HtmlInputElement;
 
@@ -14,7 +14,7 @@ use crate::{
 };
 use yew_notifications::{use_notification, Notification};
 
-#[function_component(NewIngredients)]
+#[function_component(NewIngredientComponent)]
 /// Ingredient list used for new recipes
 ///
 /// Handles form inputs+changes
@@ -57,8 +57,7 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
             let quantity = quantity_input.cast::<HtmlInputElement>().unwrap();
             let unit = unit_input.cast::<HtmlInputElement>().unwrap();
 
-            let ingredient = Ingredient {
-                id: None,
+            let ingredient = NewIngredient {
                 recipe_id: old_part.recipe_id,
                 ingredient_name: name.value(),
                 ingredient_quantity: quantity.value().parse::<i32>().unwrap_or(0),
@@ -80,8 +79,8 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
                                     DEFAULT_NOTIFICATION_DURATION,
                                 ));
                             }
-                            ApiResponse::OkRecipe(_) => {
-                                callback.emit((RecipeMode::New, ingredient));
+                            ApiResponse::OkPart(i) => {
+                                callback.emit((RecipeMode::New, i[0].clone()));
                                 use_notification.spawn(Notification::new(
                                     yew_notifications::NotificationType::Info,
                                     "Sucess",
@@ -107,7 +106,7 @@ pub fn new_ingredient(props: &RecipePartProps<Ingredient>) -> Html {
     };
 
     html! {
-    <div class="new-ingredients">
+    <div >
         <form onsubmit={handle_new_ingredient}>
             <Input
                 input_node_ref={name_input.clone()}

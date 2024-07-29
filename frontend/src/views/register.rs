@@ -1,4 +1,4 @@
-use db::structs::User;
+use db::structs::NewUser;
 use log::error;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -34,7 +34,7 @@ pub fn user_register() -> Html {
                 .unwrap()
                 .value();
 
-            let mut usr = User::default();
+            let mut usr = NewUser::default();
             usr.user_name = user_name_ref;
             usr.user_pwd = user_pwd_ref;
 

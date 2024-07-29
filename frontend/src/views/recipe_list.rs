@@ -51,7 +51,7 @@ pub fn recipe_list(RecipeListProps { recipe_name }: &RecipeListProps) -> Html {
     let list: Html = recipe_state
         .iter()
         .map(|recipe| {
-            let id = recipe.id.unwrap();
+            let id = recipe.id;
             html! {
 
                 <li id={format!("{}",id)}>

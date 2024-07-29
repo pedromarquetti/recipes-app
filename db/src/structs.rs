@@ -45,8 +45,8 @@ pub struct Step {
 impl Default for Step {
     fn default() -> Self {
         Step {
-            id: 0,
-            recipe_id: 0,
+            id: -1,
+            recipe_id: -1,
             step_name: String::new(),
             step_instruction: String::new(),
             step_duration_min: 0,
