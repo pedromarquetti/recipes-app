@@ -32,8 +32,7 @@ fn test_create_user_record() {
     };
     conn.test_transaction::<_, Error, _>(|conn| -> Result<(), DieselError> {
         let old_len = list_users_query(conn)?.len();
-        let u = create_user_record(conn, &user)?;
-        println!("{:?}", u);
+        create_user_record(conn, &user)?;
         let new_len = list_users_query(conn)?.len();
 
         assert!(new_len == old_len + 1);
@@ -182,7 +181,6 @@ fn test_delete_recipe() {
         create_recipe_query(conn, &first_recipe)?;
         let r2 = create_recipe_query(conn, &second_recipe)?;
         let old_len = fuzzy_query(conn, &String::from(""))?.len();
-        println!("recipe table length after create_recipe {old_len}");
         delete_recipe_query(
             conn,
             &UrlRecipeQuery {
