@@ -18,6 +18,10 @@ use serde::{Deserialize, Serialize};
 
 pub trait RecipeTrait {}
 impl RecipeTrait for NewRecipe {}
+
+impl RecipeTrait for User {}
+impl RecipeTrait for NewUser {}
+
 impl RecipeTrait for NewIngredient {}
 impl RecipeTrait for NewStep {}
 impl RecipeTrait for FullRecipe {}
@@ -57,6 +61,15 @@ impl Step {
     pub fn set_recipe_id(&mut self, id: i32) {
         self.recipe_id = id
     }
+}
+
+#[derive(PartialEq, Clone, Debug, Deserialize)]
+pub struct UpdateStep {
+    pub id: i32,
+    pub recipe_id: i32,
+    pub step_name: Option<String>,
+    pub step_instruction: Option<String>,
+    pub step_duration_min: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -116,6 +129,15 @@ impl Ingredient {
     pub fn set_recipe_id(&mut self, id: i32) {
         self.recipe_id = id
     }
+}
+
+#[derive(PartialEq, Deserialize, Debug)]
+pub struct UpdateIngredient {
+    pub id: i32,
+    pub recipe_id: i32,
+    pub ingredient_name: Option<String>,
+    pub ingredient_quantity: Option<i32>,
+    pub quantity_unit: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -444,6 +466,25 @@ impl User {
     /// modify Steps inside FullRecipe
     pub fn set_id(&mut self, user_id: i32) {
         self.id = user_id
+    }
+}
+
+#[derive(PartialEq, Clone, Deserialize)]
+pub struct UpdateUser {
+    pub id: i32,
+    pub user_name: Option<String>,
+    pub user_role: Option<UserRole>,
+    pub user_pwd: Option<String>,
+}
+
+impl Default for UpdateUser {
+    fn default() -> Self {
+        Self {
+            id: -1,
+            user_name: None,
+            user_role: None,
+            user_pwd: None,
+        }
     }
 }
 

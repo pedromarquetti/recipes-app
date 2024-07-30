@@ -2,6 +2,16 @@ use crate::db_pool::{DieselError, PooledPgConnection};
 use crate::structs::{Ingredient, NewIngredient};
 use diesel::prelude::*;
 
+pub fn get_ingredient_detail(
+    conn: &mut PooledPgConnection,
+    ingredient_id: i32,
+) -> Result<Ingredient, DieselError> {
+    use crate::schema::recipe_ingredient::dsl as ingredient_dsl;
+    Ok(ingredient_dsl::recipe_ingredient
+        .filter(ingredient_dsl::id.eq(ingredient_id))
+        .first::<Ingredient>(conn)?)
+}
+
 /// Ingredient DB function responsible for creating an ingredient
 pub fn create_ingredient_query(
     mut conn: PooledPgConnection,
