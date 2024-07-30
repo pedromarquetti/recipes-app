@@ -23,3 +23,7 @@ pub async fn create_user(user: NewUser) -> Result<ApiResponse<NewRecipe, String>
     let res: Value = req.json().await?;
     parse_api_response(res).await
 }
+
+pub async fn is_admin() -> Result<ApiResponse<NewUser, String>, GlooError> {
+    todo!()
+}

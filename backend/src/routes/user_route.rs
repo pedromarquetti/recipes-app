@@ -15,7 +15,7 @@ use db::{
         create_user_record, delete_user_record, list_users_query, query_user_info,
         update_user_record,
     },
-    structs::{NewUser, UrlUserQuery, User, UserRole},
+    structs::{NewUser, UpdateUser, UrlUserQuery, User, UserRole},
 };
 
 pub async fn create_user(db_conn: DbConnection, user: NewUser) -> Result<impl Reply, Rejection> {
@@ -60,7 +60,7 @@ pub async fn delete_user(
     let usr = query_user_info(&mut conn, &user_query).map_err(convert_to_rejection)?;
 
     // check if user can delete queried user (admins only) OR if user can delete themselves
-    if check_user_permission(&usr, user_claims) {
+    if check_user_permission(&usr, &user_claims) {
         // running query
         if delete_user_record(&mut conn, &user_query).map_err(convert_to_rejection)? == 0 {
             return Err(Error::not_found("User not found").into());
@@ -85,7 +85,7 @@ pub async fn get_user_name(
 
     // running query
     let query = query_user_info(&mut conn, &user_id).map_err(convert_to_rejection)?;
-    if check_user_permission(&query, user_claims) {
+    if check_user_permission(&query, &user_claims) {
         return Ok(warp::reply::json(&json!({"msg": query.user_name})));
     }
     Err(Error::user_error("User cannot be viewed", StatusCode::FORBIDDEN).into())
@@ -97,7 +97,7 @@ pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl 
     let query = query_user_info(
         &mut conn,
         &UrlUserQuery {
-            id: Some(user.id),
+            id: None,
             name: Some(user.user_name),
         },
     )
@@ -133,21 +133,54 @@ pub async fn login_user_route(db_conn: DbConnection, user: User) -> Result<impl 
 
 pub async fn update_user_info_route(
     db_conn: DbConnection,
-    user: User,
+    input_user: UpdateUser,
     user_claims: Option<UserClaims>,
 ) -> Result<impl Reply, Rejection> {
+    if input_user.id < 0 {
+        return Err(Error::user_error("invalid user id", StatusCode::UNAUTHORIZED).into());
+    }
+    // pwd validation
+    if let Some(pwd) = &input_user.user_pwd {
+        match NewUser::default().validate(pwd) {
+            Err(err) => {
+                return Err(Error::from(err).into());
+            }
+            _ => {}
+        }
+    }
     let mut conn: PooledPgConnection = db_conn.map_err(convert_to_rejection)?;
-    let usr = query_user_info(
+    let old_user = query_user_info(
         &mut conn,
         &UrlUserQuery {
-            id: Some(user.id),
-            name: Some(user.user_name.clone()),
+            id: Some(input_user.id),
+            name: None,
         },
     )
     .map_err(convert_to_rejection)?;
-    if check_user_permission(&usr, user_claims) {
+    if check_user_permission(&old_user, &user_claims) {
+        let mut updated_user: User = Default::default();
+        updated_user.set_id(old_user.id);
+
+        // conditionally checking what fields the user wants to update
+        if let Some(user_name) = input_user.user_name {
+            updated_user.user_name = user_name
+        } else {
+            // if None, set updated == old part
+            updated_user.user_name = old_user.user_name.clone()
+        }
+        if let Some(user_role) = input_user.user_role {
+            if user_claims.unwrap().role == UserRole::Admin {
+                updated_user.user_role = user_role
+            }
+        }
+        if let Some(user_pwd) = input_user.user_pwd {
+            updated_user.user_pwd = encrypt_pwd(&user_pwd).await?
+        } else {
+            updated_user.user_pwd = old_user.user_pwd.clone()
+        }
+
         // running query
-        update_user_record(&mut conn, &user).map_err(convert_to_rejection)?;
+        update_user_record(&mut conn, &updated_user).map_err(convert_to_rejection)?;
 
         return Ok(warp::reply::json(&json!({
             "msg": format!("user updated")
@@ -187,22 +220,63 @@ async fn encrypt_pwd(pwd: &str) -> Result<String, Rejection> {
 /// Users can edit themselves
 ///
 /// Returns true if user can edit
-fn check_user_permission(user: &User, claims: Option<UserClaims>) -> bool {
-    if claims.is_none()
-        || user
-            .id
-            .ne(&claims.as_ref().expect("expected valid TOKEN").user_id)
-    {
-        // return false if no token found OR user id != claim
-        return false;
-    } else {
-        if let Some(user_claims) = claims {
-            // token found
-            if user_claims.role.eq(&UserRole::Admin) {
-                // admins can edit any user
-                return true;
-            }
+fn check_user_permission(user: &User, claims: &Option<UserClaims>) -> bool {
+    if let Some(claim) = claims {
+        // UserClaims found!
+        if claim.role == UserRole::Admin || user.id.eq(&claim.user_id) {
+            // return true if user is admin OR user id matches
+            return true;
         }
-        return true;
+    }
+    false
+}
+
+#[cfg(test)]
+mod user_permission_test {
+    use db::structs::{User, UserRole};
+
+    use crate::{jwt::UserClaims, routes::user_route::check_user_permission};
+
+    #[test]
+    fn test_check_user_perm() {
+        let normal_user = User {
+            id: 1,
+            user_role: UserRole::User,
+            ..Default::default()
+        };
+        let admin_user = User {
+            id: 2,
+            user_role: UserRole::Admin,
+            ..Default::default()
+        };
+        let admin_claims = UserClaims {
+            user_id: 2,
+            role: UserRole::Admin,
+            ..Default::default()
+        };
+        let normal_claims = UserClaims {
+            user_id: 1,
+            role: UserRole::User,
+            ..Default::default()
+        };
+        let invalid_claims = User {
+            id: -23,
+            user_role: UserRole::Admin,
+            ..Default::default()
+        };
+        // no claims, should return false
+        assert!(check_user_permission(&normal_user, &None) == false);
+
+        // normal user with matching normal claims, should return true
+        assert!(check_user_permission(&normal_user, &Some(normal_claims.clone())) == true);
+
+        // admin trying to access  normal user, should return true
+        assert!(check_user_permission(&normal_user, &Some(admin_claims)) == true);
+
+        // normal claims trying to access admin_user, should return false
+        assert!(check_user_permission(&admin_user, &Some(normal_claims.clone())) == false);
+
+        // invalid id with admin role, should return false
+        assert!(check_user_permission(&invalid_claims, &Some(normal_claims)) == false)
     }
 }
