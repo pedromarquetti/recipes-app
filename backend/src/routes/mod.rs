@@ -145,7 +145,7 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::body::json())
         .and_then(login_user_route);
     let update_user = warp::post()
-        .and(path!("api" / "login" / "user"))
+        .and(path!("api" / "update" / "user"))
         .and(pool_filter.clone())
         .and(warp::body::json())
         .and(auth())
