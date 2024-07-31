@@ -206,7 +206,18 @@ pub async fn list_users(
 
     let users = list_users_query(&mut conn).map_err(convert_to_rejection)?;
 
-    return Ok(warp::reply::json(&json!({"msg":users})));
+    return Ok(warp::reply::json(&json!(users)));
+}
+
+pub async fn is_admin(claims: Option<UserClaims>) -> Result<impl Reply, Rejection> {
+    if let Some(claims) = claims {
+        if claims.role == UserRole::Admin {
+            return Ok(warp::reply::json(&json!({"msg":"user is admin"})));
+        } else {
+            return Err(Error::user_error("user is not admin", StatusCode::UNAUTHORIZED).into());
+        }
+    }
+    return Err(Error::user_error("No JWT found!", StatusCode::BAD_REQUEST).into());
 }
 
 async fn encrypt_pwd(pwd: &str) -> Result<String, Rejection> {

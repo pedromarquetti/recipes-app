@@ -24,6 +24,7 @@ use db::{
 };
 use recipe_route::check_edit_permission;
 use serde_json::json;
+use user_route::is_admin;
 use warp::{http::method::Method, path, Filter, Rejection, Reply};
 
 pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -155,11 +156,16 @@ pub fn routing_table(pool: Pool) -> impl Filter<Extract = impl Reply, Error = Re
         .and(pool_filter.clone())
         .and(auth())
         .and_then(list_users);
+    let is_admin = warp::get()
+        .and(path!("api" / "get" / "admin"))
+        .and(auth())
+        .and_then(is_admin);
 
     let ping_endpoint = warp::any().and(path!("api" / "ping")).and_then(ping);
 
     let user_endpoints = create_user
         .or(get_user_info)
+        .or(is_admin)
         .or(list_users)
         .or(delete_user)
         .or(login_user)
