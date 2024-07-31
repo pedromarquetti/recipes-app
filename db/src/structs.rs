@@ -1,7 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use crate::schema::{recipe, recipe_ingredient, recipe_step, recipe_users};
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     io::{Error as IOError, Write},
 };
 
@@ -17,17 +17,19 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 
 pub trait RecipeTrait {}
+impl RecipeTrait for FullRecipe {}
 impl RecipeTrait for NewRecipe {}
+impl RecipeTrait for Recipe {}
 
 impl RecipeTrait for User {}
 impl RecipeTrait for NewUser {}
 
-impl RecipeTrait for NewIngredient {}
-impl RecipeTrait for NewStep {}
-impl RecipeTrait for FullRecipe {}
-impl RecipeTrait for Recipe {}
 impl RecipeTrait for Ingredient {}
+impl RecipeTrait for NewIngredient {}
+
 impl RecipeTrait for Step {}
+impl RecipeTrait for NewStep {}
+
 impl<T> RecipeTrait for Vec<T> {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -211,6 +213,13 @@ impl Recipe {
     pub fn set_observation(&mut self, obs: Option<Vec<Option<String>>>) {
         self.recipe_observations = obs
     }
+}
+
+pub struct UpdateRecipe {
+    pub id: i32,
+    pub user_id: i32,
+    pub recipe_name: Option<String>,
+    pub recipe_observations: Option<Vec<Option<String>>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -496,6 +505,18 @@ impl Default for UpdateUser {
 pub enum UserRole {
     User,
     Admin,
+}
+impl Display for UserRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserRole::Admin => {
+                write!(f, "admin")
+            }
+            UserRole::User => {
+                write!(f, "user")
+            }
+        }
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
