@@ -18,17 +18,22 @@ use serde::{Deserialize, Serialize};
 
 pub trait RecipeTrait {}
 impl RecipeTrait for FullRecipe {}
+
 impl RecipeTrait for NewRecipe {}
+impl RecipeTrait for UpdateRecipe {}
 impl RecipeTrait for Recipe {}
 
 impl RecipeTrait for User {}
 impl RecipeTrait for NewUser {}
+impl RecipeTrait for UpdateUser {}
 
 impl RecipeTrait for Ingredient {}
 impl RecipeTrait for NewIngredient {}
+impl RecipeTrait for UpdateIngredient {}
 
 impl RecipeTrait for Step {}
 impl RecipeTrait for NewStep {}
+impl RecipeTrait for UpdateStep {}
 
 impl<T> RecipeTrait for Vec<T> {}
 
@@ -65,7 +70,7 @@ impl Step {
     }
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct UpdateStep {
     pub id: i32,
     pub recipe_id: i32,
@@ -133,7 +138,7 @@ impl Ingredient {
     }
 }
 
-#[derive(PartialEq, Deserialize, Debug)]
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct UpdateIngredient {
     pub id: i32,
     pub recipe_id: i32,
@@ -215,6 +220,7 @@ impl Recipe {
     }
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct UpdateRecipe {
     pub id: i32,
     pub user_id: i32,

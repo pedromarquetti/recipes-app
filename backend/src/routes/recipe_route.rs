@@ -8,10 +8,10 @@ use crate::{
 use db::{
     db_pool::{DbConnection, PooledPgConnection},
     functions::recipe::{
-        create_recipe_query, delete_recipe_query, fuzzy_query, query_full_recipe,
+        create_recipe_query, delete_recipe_query, fuzzy_query, query_full_recipe, query_recipe,
         update_recipe_query,
     },
-    structs::{NewRecipe, Recipe, UrlRecipeQuery},
+    structs::{NewRecipe, Recipe, UpdateRecipe, UrlRecipeQuery},
 };
 
 use super::validate_permission;
@@ -87,24 +87,32 @@ pub async fn fuzzy_query_recipe(
 }
 
 pub async fn update_recipe(
-    incoming_recipe: Recipe,
+    incoming_recipe: UpdateRecipe,
     user_claims: Option<UserClaims>,
     db_connection: DbConnection,
 ) -> Result<impl Reply, Rejection> {
     let mut conn: PooledPgConnection = db_connection.map_err(convert_to_rejection)?;
 
     // querying recipe so we can validate ownership
-    let recipe = query_full_recipe(
+    let old_recipe = query_recipe(
         &mut conn,
-        &UrlRecipeQuery {
+        UrlRecipeQuery {
             id: Some(incoming_recipe.id),
             name: None,
         },
     )
     .map_err(convert_to_rejection)?;
 
-    if validate_permission(recipe.recipe.user_id, user_claims) {
-        update_recipe_query(&mut conn, &incoming_recipe).map_err(convert_to_rejection)?;
+    if validate_permission(old_recipe.user_id, user_claims) {
+        let mut updated_recipe = Recipe::default();
+        if let Some(recipe_name) = incoming_recipe.recipe_name {
+            updated_recipe.recipe_name = recipe_name;
+        } else {
+            updated_recipe.recipe_name = old_recipe.recipe_name
+        }
+        updated_recipe.recipe_observations = incoming_recipe.recipe_observations;
+
+        update_recipe_query(&mut conn, &updated_recipe).map_err(convert_to_rejection)?;
         return Ok(warp::reply::json(&json!({"msg":"recipe updated!"})));
     } else {
         return Err(Error::user_error("Cannot update recipe", StatusCode::UNAUTHORIZED).into());
